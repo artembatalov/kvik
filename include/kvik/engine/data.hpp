@@ -1,8 +1,4 @@
 #pragma once
-#include "../types/geoindex.hpp"
-#include "../types/list.hpp"
-#include "../types/set.hpp"
-#include "../types/string.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <ctime>
@@ -13,15 +9,21 @@
 #include <variant>
 #include <vector>
 
+#include "../types/geoindex.hpp"
+#include "../types/list.hpp"
+#include "../types/set.hpp"
+#include "../types/string.hpp"
+
 class DatabaseData {
-public:
+ public:
   DatabaseData(const uint64_t &max_memory = 0) {
     max_memory_ = max_memory;
     max_memory_set_ = (max_memory_ != 0);
     ttl_enabled_ = false;
   }
 
-  template <typename Type> void Add(const std::string &key, const Type &value) {
+  template <typename Type>
+  void Add(const std::string &key, const Type &value) {
     auto it = data_.find(key);
     size_t old_mem =
         (it != data_.end()) ? EntryMemory(it->first, it->second) : 0;
@@ -39,10 +41,10 @@ public:
     }
   }
 
-  template <typename Type> Type &Get(const std::string &key) {
+  template <typename Type>
+  Type &Get(const std::string &key) {
     auto it = data_.find(key);
-    if (it == data_.end())
-      throw std::runtime_error("ERR no such key");
+    if (it == data_.end()) throw std::runtime_error("ERR no such key");
     if (it->second.ttl > 0 && now_ > 0 && now_ >= it->second.ttl) {
       current_memory_ -= EntryMemory(it->first, it->second);
       data_.erase(it);
@@ -54,10 +56,10 @@ public:
     return std::get<Type>(it->second.element);
   }
 
-  template <typename Type> Type Extract(const std::string &key) {
+  template <typename Type>
+  Type Extract(const std::string &key) {
     auto it = data_.find(key);
-    if (it == data_.end())
-      throw std::runtime_error("ERR no such key");
+    if (it == data_.end()) throw std::runtime_error("ERR no such key");
     if (!std::holds_alternative<Type>(it->second.element))
       throw std::runtime_error(
           "WRONGTYPE Operation against a key holding the wrong kind of value");
@@ -70,16 +72,15 @@ public:
 
   void Delete(const std::string &key) {
     auto it = data_.find(key);
-    if (it == data_.end())
-      return;
+    if (it == data_.end()) return;
     current_memory_ -= EntryMemory(it->first, it->second);
     data_.erase(it);
   }
 
-  template <typename Type> bool IsExist(const std::string &key) {
+  template <typename Type>
+  bool IsExist(const std::string &key) {
     auto it = data_.find(key);
-    if (it == data_.end())
-      return false;
+    if (it == data_.end()) return false;
     if (it->second.ttl > 0 && now_ > 0 && now_ >= it->second.ttl) {
       current_memory_ -= EntryMemory(it->first, it->second);
       data_.erase(it);
@@ -95,8 +96,7 @@ public:
 
   std::string Type(const std::string &key) {
     auto it = data_.find(key);
-    if (it == data_.end())
-      return "none";
+    if (it == data_.end()) return "none";
     return std::visit(
         Overloaded{[](String &) -> std::string { return "string"; },
                    [](List &) -> std::string { return "list"; },
@@ -109,8 +109,7 @@ public:
   std::vector<std::string> Keys() {
     std::vector<std::string> keys;
     keys.reserve(data_.size());
-    for (auto &[k, v] : data_)
-      keys.push_back(k);
+    for (auto &[k, v] : data_) keys.push_back(k);
     return keys;
   }
 
@@ -123,8 +122,7 @@ public:
 
   void SetTTL(const std::string &key, const int &seconds) {
     auto it = data_.find(key);
-    if (it == data_.end())
-      throw std::runtime_error("ERR no such key");
+    if (it == data_.end()) throw std::runtime_error("ERR no such key");
     time_t exp = std::time(nullptr) + seconds;
     it->second.ttl = exp;
     expiry_queue_.push({exp, key});
@@ -133,17 +131,14 @@ public:
 
   int GetTTL(const std::string &key) const {
     auto it = data_.find(key);
-    if (it == data_.end())
-      return -2;
-    if (it->second.ttl == 0)
-      return -1;
+    if (it == data_.end()) return -2;
+    if (it->second.ttl == 0) return -1;
     return std::max(0, (int)(it->second.ttl - std::time(nullptr)));
   }
 
   bool RemoveTTL(const std::string &key) {
     auto it = data_.find(key);
-    if (it == data_.end() || it->second.ttl == 0)
-      return false;
+    if (it == data_.end() || it->second.ttl == 0) return false;
     it->second.ttl = 0;
     return true;
   }
@@ -166,8 +161,7 @@ public:
 
   size_t MemoryUsage(const std::string &key) {
     auto it = data_.find(key);
-    if (it == data_.end())
-      return 0;
+    if (it == data_.end()) return 0;
     return EntryMemory(it->first, it->second);
   }
 
@@ -182,8 +176,9 @@ public:
 
   void SetNow(time_t now) { now_ = now; }
 
-private:
-  template <typename... Ts> struct Overloaded : Ts... {
+ private:
+  template <typename... Ts>
+  struct Overloaded : Ts... {
     using Ts::operator()...;
   };
 
@@ -192,7 +187,8 @@ private:
     time_t ttl = 0;
   };
 
-  template <typename T> static size_t EstimateValueSize(const T &val) {
+  template <typename T>
+  static size_t EstimateValueSize(const T &val) {
     if constexpr (std::is_same_v<T, String>)
       return val.MemoryUsage();
     else if constexpr (std::is_same_v<T, List>)

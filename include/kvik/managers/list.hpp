@@ -1,13 +1,14 @@
 #pragma once
-#include "../managers/type.hpp"
-#include "../types/list.hpp"
 #include <algorithm>
 #include <cctype>
 #include <string>
 #include <vector>
 
+#include "../managers/type.hpp"
+#include "../types/list.hpp"
+
 class ListManager : public DatabaseTypeManager {
-public:
+ public:
   using Args = std::vector<std::string>;
 
   ListManager(DatabaseData &data) : DatabaseTypeManager(data) {
@@ -49,8 +50,7 @@ public:
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'lpop' command");
            }
-           if (!data_.IsExist<List>(args[1]))
-             return "(nil)\n";
+           if (!data_.IsExist<List>(args[1])) return "(nil)\n";
            int count = 1;
            if (args.size() >= 3) {
              count = ParseInt(args[2]);
@@ -62,12 +62,9 @@ public:
            auto &list = data_.Get<List>(args[1]);
            auto popped = list.PopLeft(count);
            bool empty = (list.Size() == 0);
-           if (empty)
-             data_.Delete(args[1]);
-           if (popped.empty())
-             return "(nil)\n";
-           if (args.size() < 3)
-             return "\"" + popped[0] + "\"\n";
+           if (empty) data_.Delete(args[1]);
+           if (popped.empty()) return "(nil)\n";
+           if (args.size() < 3) return "\"" + popped[0] + "\"\n";
            return FormatList(popped);
          }},
 
@@ -77,8 +74,7 @@ public:
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'rpop' command");
            }
-           if (!data_.IsExist<List>(args[1]))
-             return "(nil)\n";
+           if (!data_.IsExist<List>(args[1])) return "(nil)\n";
            int count = 1;
            if (args.size() >= 3) {
              count = ParseInt(args[2]);
@@ -90,12 +86,9 @@ public:
            auto &list = data_.Get<List>(args[1]);
            auto popped = list.PopRight(count);
            bool empty = (list.Size() == 0);
-           if (empty)
-             data_.Delete(args[1]);
-           if (popped.empty())
-             return "(nil)\n";
-           if (args.size() < 3)
-             return "\"" + popped[0] + "\"\n";
+           if (empty) data_.Delete(args[1]);
+           if (popped.empty()) return "(nil)\n";
+           if (args.size() < 3) return "\"" + popped[0] + "\"\n";
            return FormatList(popped);
          }},
 
@@ -105,8 +98,7 @@ public:
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'llen' command");
            }
-           if (!data_.IsExist<List>(args[1]))
-             return "(integer) 0\n";
+           if (!data_.IsExist<List>(args[1])) return "(integer) 0\n";
            return "(integer) " +
                   std::to_string(data_.Get<List>(args[1]).Size()) + "\n";
          }},
@@ -117,12 +109,10 @@ public:
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'lrange' command");
            }
-           if (!data_.IsExist<List>(args[1]))
-             return "(empty array)\n";
+           if (!data_.IsExist<List>(args[1])) return "(empty array)\n";
            auto elems = data_.Get<List>(args[1]).Range(ParseInt(args[2]),
                                                        ParseInt(args[3]));
-           if (elems.empty())
-             return "(empty array)\n";
+           if (elems.empty()) return "(empty array)\n";
            return FormatList(elems);
          }},
 
@@ -132,8 +122,7 @@ public:
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'lindex' command");
            }
-           if (!data_.IsExist<List>(args[1]))
-             return "(nil)\n";
+           if (!data_.IsExist<List>(args[1])) return "(nil)\n";
            try {
              return "\"" + data_.Get<List>(args[1]).Index(ParseInt(args[2])) +
                     "\"\n";
@@ -162,8 +151,7 @@ public:
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'linsert' command");
            }
-           if (!data_.IsExist<List>(args[1]))
-             return "(integer) 0\n";
+           if (!data_.IsExist<List>(args[1])) return "(integer) 0\n";
            std::string dir = args[2];
            std::transform(dir.begin(), dir.end(), dir.begin(), ::toupper);
            if (dir != "BEFORE" && dir != "AFTER") {
@@ -172,13 +160,12 @@ public:
            bool before = (dir == "BEFORE");
            auto &list = data_.Get<List>(args[1]);
            bool ok = list.Insert(args[3], args[4], before);
-           if (!ok)
-             return "(integer) -1\n";
+           if (!ok) return "(integer) -1\n";
            return "(integer) " + std::to_string(list.Size()) + "\n";
          }}};
   }
 
-private:
+ private:
   static int ParseInt(const std::string &s) {
     try {
       return std::stoi(s);

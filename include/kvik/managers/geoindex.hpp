@@ -1,13 +1,14 @@
 #pragma once
-#include "../managers/type.hpp"
-#include "../types/geoindex.hpp"
 #include <iomanip>
 #include <sstream>
 #include <string>
 #include <vector>
 
+#include "../managers/type.hpp"
+#include "../types/geoindex.hpp"
+
 class GeoIndexManager : public DatabaseTypeManager {
-public:
+ public:
   using Args = std::vector<std::string>;
 
   GeoIndexManager(DatabaseData &data) : DatabaseTypeManager(data) {
@@ -34,8 +35,7 @@ public:
              }
              bool exists = geo.HasMember(args[i + 2]);
              geo.Add(lon, lat, args[i + 2]);
-             if (!exists)
-               added++;
+             if (!exists) added++;
            }
            return "(integer) " + std::to_string(added) + "\n";
          }},
@@ -78,12 +78,10 @@ public:
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'geodist' command");
            }
-           if (!data_.IsExist<GeoIndex>(args[1]))
-             return "(nil)\n";
+           if (!data_.IsExist<GeoIndex>(args[1])) return "(nil)\n";
            auto &geo = data_.Get<GeoIndex>(args[1]);
            auto dist_m = geo.Dist(args[2], args[3]);
-           if (!dist_m)
-             return "(nil)\n";
+           if (!dist_m) return "(nil)\n";
            std::string unit = (args.size() >= 5) ? args[4] : "m";
            std::transform(unit.begin(), unit.end(), unit.begin(), ::tolower);
            double converted = GeoIndex::ToMeters(*dist_m, unit);
@@ -107,7 +105,7 @@ public:
          }}};
   }
 
-private:
+ private:
   static std::string FormatDouble(double v) {
     std::ostringstream ss;
     ss << std::fixed << std::setprecision(4) << v;
@@ -119,8 +117,7 @@ private:
       throw std::runtime_error(
           "ERR wrong number of arguments for 'geosearch' command");
     }
-    if (!data_.IsExist<GeoIndex>(args[1]))
-      return "(empty array)\n";
+    if (!data_.IsExist<GeoIndex>(args[1])) return "(empty array)\n";
     double lon, lat, radius;
     try {
       lon = std::stod(args[3]);
@@ -154,15 +151,13 @@ private:
 
     auto &src = data_.Get<GeoIndex>(args[1]);
     auto results = src.Search(lon, lat, radius_m, asc, count);
-    if (results.empty())
-      return "(empty array)\n";
+    if (results.empty()) return "(empty array)\n";
 
     if (!store_dest.empty()) {
       GeoIndex dest_geo;
       for (auto &r : results) {
         auto pos = src.Pos(r.member);
-        if (pos)
-          dest_geo.Add(pos->lon, pos->lat, r.member);
+        if (pos) dest_geo.Add(pos->lon, pos->lat, r.member);
       }
       data_.Add<GeoIndex>(store_dest, dest_geo);
       return "(integer) " + std::to_string(results.size()) + "\n";

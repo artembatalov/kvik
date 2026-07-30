@@ -1,11 +1,12 @@
 #pragma once
-#include "../managers/type.hpp"
-#include "../types/set.hpp"
 #include <string>
 #include <vector>
 
+#include "../managers/type.hpp"
+#include "../types/set.hpp"
+
 class SetManager : public DatabaseTypeManager {
-public:
+ public:
   using Args = std::vector<std::string>;
 
   SetManager(DatabaseData &data) : DatabaseTypeManager(data) {
@@ -32,14 +33,12 @@ public:
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'srem' command");
            }
-           if (!data_.IsExist<Set>(args[1]))
-             return "(integer) 0\n";
+           if (!data_.IsExist<Set>(args[1])) return "(integer) 0\n";
            auto &s = data_.Get<Set>(args[1]);
            size_t before = s.Size();
            s.Remove(std::vector<std::string>(args.begin() + 2, args.end()));
            size_t after = s.Size();
-           if (after == 0)
-             data_.Delete(args[1]);
+           if (after == 0) data_.Delete(args[1]);
            return "(integer) " + std::to_string(before - after) + "\n";
          }},
 
@@ -49,8 +48,7 @@ public:
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'sismember' command");
            }
-           if (!data_.IsExist<Set>(args[1]))
-             return "(integer) 0\n";
+           if (!data_.IsExist<Set>(args[1])) return "(integer) 0\n";
            return data_.Get<Set>(args[1]).IsMember(args[2]) ? "(integer) 1\n"
                                                             : "(integer) 0\n";
          }},
@@ -61,8 +59,7 @@ public:
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'smembers' command");
            }
-           if (!data_.IsExist<Set>(args[1]))
-             return "(empty set)\n";
+           if (!data_.IsExist<Set>(args[1])) return "(empty set)\n";
            auto &members = data_.Get<Set>(args[1]).GetSet();
            return FormatSet(members);
          }},
@@ -73,8 +70,7 @@ public:
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'scard' command");
            }
-           if (!data_.IsExist<Set>(args[1]))
-             return "(integer) 0\n";
+           if (!data_.IsExist<Set>(args[1])) return "(integer) 0\n";
            return "(integer) " +
                   std::to_string(data_.Get<Set>(args[1]).Size()) + "\n";
          }},
@@ -91,8 +87,7 @@ public:
                sunion.Add(data_.Get<Set>(args[i]));
            }
            auto &members = sunion.GetSet();
-           if (members.empty())
-             return "(empty set)\n";
+           if (members.empty()) return "(empty set)\n";
            return FormatSet(members);
          }},
 
@@ -102,17 +97,14 @@ public:
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'sinter' command");
            }
-           if (!data_.IsExist<Set>(args[1]))
-             return "(empty set)\n";
+           if (!data_.IsExist<Set>(args[1])) return "(empty set)\n";
            Set result = data_.Get<Set>(args[1]);
            for (int i = 2; i < (int)args.size(); i++) {
-             if (!data_.IsExist<Set>(args[i]))
-               return "(empty set)\n";
+             if (!data_.IsExist<Set>(args[i])) return "(empty set)\n";
              result = result.Intersect(data_.Get<Set>(args[i]));
            }
            auto &members = result.GetSet();
-           if (members.empty())
-             return "(empty set)\n";
+           if (members.empty()) return "(empty set)\n";
            return FormatSet(members);
          }},
 
@@ -122,16 +114,14 @@ public:
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'sdiff' command");
            }
-           if (!data_.IsExist<Set>(args[1]))
-             return "(empty set)\n";
+           if (!data_.IsExist<Set>(args[1])) return "(empty set)\n";
            Set result = data_.Get<Set>(args[1]);
            for (int i = 2; i < (int)args.size(); i++) {
              if (data_.IsExist<Set>(args[i]))
                result = result.Diff(data_.Get<Set>(args[i]));
            }
            auto &members = result.GetSet();
-           if (members.empty())
-             return "(empty set)\n";
+           if (members.empty()) return "(empty set)\n";
            return FormatSet(members);
          }},
 
@@ -142,11 +132,9 @@ public:
            }
            bool src_exists = data_.IsExist<Set>(args[1]);
            bool dest_exists = data_.IsExist<Set>(args[2]);
-           if (!src_exists)
-             return "(integer) 0\n";
+           if (!src_exists) return "(integer) 0\n";
            auto &src = data_.Get<Set>(args[1]);
-           if (!src.IsMember(args[3]))
-             return "(integer) 0\n";
+           if (!src.IsMember(args[3])) return "(integer) 0\n";
            src.Remove({args[3]});
            size_t src_size_after = src.Size();
            if (!dest_exists) {
@@ -160,7 +148,7 @@ public:
          }}};
   }
 
-private:
+ private:
   static std::string FormatSet(const std::unordered_set<std::string> &members) {
     std::string res;
     res.reserve(members.size() * 16);

@@ -1,12 +1,14 @@
 #pragma once
-#include "../engine/data.hpp"
-#include "../managers/type.hpp"
 #include <fnmatch.h>
+
 #include <string>
 #include <vector>
 
+#include "../engine/data.hpp"
+#include "../managers/type.hpp"
+
 class DatabaseManager : public DatabaseTypeManager {
-public:
+ public:
   using Args = std::vector<std::string>;
 
   DatabaseManager(DatabaseData &data) : DatabaseTypeManager(data) {
@@ -45,8 +47,7 @@ public:
            }
            int count = 0;
            for (int i = 1; i < (int)args.size(); i++) {
-             if (data_.IsKey(args[i]))
-               count++;
+             if (data_.IsKey(args[i])) count++;
            }
            return "(integer) " + std::to_string(count) + "\n";
          }},
@@ -64,8 +65,7 @@ public:
              if (fnmatch(args[1].c_str(), k.c_str(), 0) == 0)
                matched.push_back(k);
            }
-           if (matched.empty())
-             return "(empty array)\n";
+           if (matched.empty()) return "(empty array)\n";
            std::string res;
            res.reserve(matched.size() * 16);
            for (int i = 0; i < (int)matched.size(); i++) {
@@ -112,8 +112,7 @@ public:
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'memory|usage' command");
            }
-           if (!data_.IsKey(args[1]))
-             return "(nil)\n";
+           if (!data_.IsKey(args[1])) return "(nil)\n";
            return "(integer) " + std::to_string(data_.MemoryUsage(args[1])) +
                   "\n";
          }},
@@ -124,8 +123,7 @@ public:
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'expire' command");
            }
-           if (!data_.IsKey(args[1]))
-             return "(integer) 0\n";
+           if (!data_.IsKey(args[1])) return "(integer) 0\n";
            int seconds;
            try {
              seconds = std::stoi(args[2]);
@@ -155,13 +153,11 @@ public:
          }}};
   }
 
-private:
+ private:
   static uint64_t ParseMemory(const std::string &s) {
-    if (s.empty())
-      return 0;
+    if (s.empty()) return 0;
     size_t i = s.size() - 1;
-    while (i > 0 && !std::isdigit(s[i]))
-      i--;
+    while (i > 0 && !std::isdigit(s[i])) i--;
     uint64_t val;
     try {
       val = std::stoull(s.substr(0, i + 1));
@@ -169,14 +165,10 @@ private:
       throw std::runtime_error("ERR value is not an integer or out of range");
     }
     std::string suffix = s.substr(i + 1);
-    for (auto &c : suffix)
-      c = std::tolower(c);
-    if (suffix == "kb")
-      return val * 1024;
-    if (suffix == "mb")
-      return val * 1024 * 1024;
-    if (suffix == "gb")
-      return val * 1024 * 1024 * 1024;
+    for (auto &c : suffix) c = std::tolower(c);
+    if (suffix == "kb") return val * 1024;
+    if (suffix == "mb") return val * 1024 * 1024;
+    if (suffix == "gb") return val * 1024 * 1024 * 1024;
     return val;
   }
 };

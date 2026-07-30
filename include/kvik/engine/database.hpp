@@ -1,4 +1,8 @@
 #pragma once
+#include <memory>
+#include <string>
+#include <vector>
+
 #include "../managers/database.hpp"
 #include "../managers/geoindex.hpp"
 #include "../managers/list.hpp"
@@ -7,12 +11,9 @@
 #include "../managers/type.hpp"
 #include "data.hpp"
 #include "parser.hpp"
-#include <memory>
-#include <string>
-#include <vector>
 
 class Database {
-public:
+ public:
   using Args = std::vector<std::string>;
 
   using Commands =
@@ -36,7 +37,7 @@ public:
     return found_it->second(parsed);
   }
 
-private:
+ private:
   void ManagersInit() {
     managers_.push_back(std::make_unique<DatabaseManager>(data_));
     managers_.push_back(std::make_unique<StringManager>(data_));

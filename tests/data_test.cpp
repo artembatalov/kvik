@@ -1,4 +1,5 @@
 #include "include/kvik/engine/database.hpp"
+#include "include/kvik/types/list.hpp"
 #include <algorithm>
 #include <gtest/gtest.h>
 #include <stdexcept>
@@ -173,4 +174,13 @@ TEST(DatabaseData, TotalMemoryNonZero) {
 TEST(DatabaseData, MemoryUsageMissingKeyZero) {
   DatabaseData db;
   EXPECT_EQ(db.MemoryUsage("missing"), 0);
+}
+
+TEST(DatabaseData, MemoryUsageAfterModification) {
+  DatabaseData db;
+  db.Add<List>("key", List());
+  size_t previous_memory = db.TotalMemory();
+  List &key = db.Get<List>("key");
+  key.PushRight(std::vector<std::string> {"Bug", "could", "be", "here"});
+  EXPECT_NE(previous_memory, db.TotalMemory());
 }

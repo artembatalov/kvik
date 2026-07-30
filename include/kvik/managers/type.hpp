@@ -1,12 +1,13 @@
 #pragma once
-#include "../engine/data.hpp"
 #include <functional>
 #include <string>
 #include <unordered_map>
 #include <vector>
 
+#include "../engine/data.hpp"
+
 class DatabaseTypeManager {
-public:
+ public:
   using Args = std::vector<std::string>;
   using Commands =
       std::unordered_map<std::string, std::function<std::string(const Args &)>>;
@@ -19,7 +20,7 @@ public:
 
   const Commands &GetCommands() { return commands_; }
 
-protected:
+ protected:
   Commands commands_;
   DatabaseData &data_;
 };

@@ -1,11 +1,12 @@
 #pragma once
-#include "../managers/type.hpp"
-#include "../types/string.hpp"
 #include <string>
 #include <vector>
 
+#include "../managers/type.hpp"
+#include "../types/string.hpp"
+
 class StringManager : public DatabaseTypeManager {
-public:
+ public:
   using Args = std::vector<std::string>;
 
   StringManager(DatabaseData &data) : DatabaseTypeManager(data) {
@@ -27,8 +28,7 @@ public:
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'get' command");
            }
-           if (!data_.IsExist<String>(args[1]))
-             return "(nil)\n";
+           if (!data_.IsExist<String>(args[1])) return "(nil)\n";
            return "\"" + data_.Get<String>(args[1]).GetString() + "\"\n";
          }},
 
@@ -38,8 +38,7 @@ public:
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'strlen' command");
            }
-           if (!data_.IsExist<String>(args[1]))
-             return "(integer) 0\n";
+           if (!data_.IsExist<String>(args[1])) return "(integer) 0\n";
            return "(integer) " +
                   std::to_string(data_.Get<String>(args[1]).Size()) + "\n";
          }},
