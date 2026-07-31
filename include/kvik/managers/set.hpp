@@ -21,10 +21,10 @@ class SetManager : public DatabaseTypeManager {
            if (!data_.IsExist<Set>(args[1])) {
              data_.Add<Set>(args[1], Set{});
            }
-           auto &s = data_.Get<Set>(args[1]);
-           size_t before = s.Size();
-           s.Add(std::vector<std::string>(args.begin() + 2, args.end()));
-           return "(integer) " + std::to_string(s.Size() - before) + "\n";
+           auto s = data_.Modify<Set>(args[1]);
+           size_t before = s->Size();
+           s->Add(std::vector<std::string>(args.begin() + 2, args.end()));
+           return "(integer) " + std::to_string(s->Size() - before) + "\n";
          }},
 
         {"SREM",
@@ -34,10 +34,10 @@ class SetManager : public DatabaseTypeManager {
                  "ERR wrong number of arguments for 'srem' command");
            }
            if (!data_.IsExist<Set>(args[1])) return "(integer) 0\n";
-           auto &s = data_.Get<Set>(args[1]);
-           size_t before = s.Size();
-           s.Remove(std::vector<std::string>(args.begin() + 2, args.end()));
-           size_t after = s.Size();
+           auto s = data_.Modify<Set>(args[1]);
+           size_t before = s->Size();
+           s->Remove(std::vector<std::string>(args.begin() + 2, args.end()));
+           size_t after = s->Size();
            if (after == 0) data_.Delete(args[1]);
            return "(integer) " + std::to_string(before - after) + "\n";
          }},
@@ -49,7 +49,7 @@ class SetManager : public DatabaseTypeManager {
                  "ERR wrong number of arguments for 'sismember' command");
            }
            if (!data_.IsExist<Set>(args[1])) return "(integer) 0\n";
-           return data_.Get<Set>(args[1]).IsMember(args[2]) ? "(integer) 1\n"
+           return data_.View<Set>(args[1]).IsMember(args[2]) ? "(integer) 1\n"
                                                             : "(integer) 0\n";
          }},
 
@@ -60,7 +60,7 @@ class SetManager : public DatabaseTypeManager {
                  "ERR wrong number of arguments for 'smembers' command");
            }
            if (!data_.IsExist<Set>(args[1])) return "(empty set)\n";
-           auto &members = data_.Get<Set>(args[1]).GetSet();
+           auto &members = data_.View<Set>(args[1]).GetSet();
            return FormatSet(members);
          }},
 
@@ -72,7 +72,7 @@ class SetManager : public DatabaseTypeManager {
            }
            if (!data_.IsExist<Set>(args[1])) return "(integer) 0\n";
            return "(integer) " +
-                  std::to_string(data_.Get<Set>(args[1]).Size()) + "\n";
+                  std::to_string(data_.View<Set>(args[1]).Size()) + "\n";
          }},
 
         {"SUNION",
@@ -84,7 +84,7 @@ class SetManager : public DatabaseTypeManager {
            Set sunion;
            for (int i = 1; i < (int)args.size(); i++) {
              if (data_.IsExist<Set>(args[i]))
-               sunion.Add(data_.Get<Set>(args[i]));
+               sunion.Add(data_.View<Set>(args[i]));
            }
            auto &members = sunion.GetSet();
            if (members.empty()) return "(empty set)\n";
@@ -98,10 +98,10 @@ class SetManager : public DatabaseTypeManager {
                  "ERR wrong number of arguments for 'sinter' command");
            }
            if (!data_.IsExist<Set>(args[1])) return "(empty set)\n";
-           Set result = data_.Get<Set>(args[1]);
+           Set result = data_.View<Set>(args[1]);
            for (int i = 2; i < (int)args.size(); i++) {
              if (!data_.IsExist<Set>(args[i])) return "(empty set)\n";
-             result = result.Intersect(data_.Get<Set>(args[i]));
+             result = result.Intersect(data_.View<Set>(args[i]));
            }
            auto &members = result.GetSet();
            if (members.empty()) return "(empty set)\n";
@@ -115,10 +115,10 @@ class SetManager : public DatabaseTypeManager {
                  "ERR wrong number of arguments for 'sdiff' command");
            }
            if (!data_.IsExist<Set>(args[1])) return "(empty set)\n";
-           Set result = data_.Get<Set>(args[1]);
+           Set result = data_.View<Set>(args[1]);
            for (int i = 2; i < (int)args.size(); i++) {
              if (data_.IsExist<Set>(args[i]))
-               result = result.Diff(data_.Get<Set>(args[i]));
+               result = result.Diff(data_.View<Set>(args[i]));
            }
            auto &members = result.GetSet();
            if (members.empty()) return "(empty set)\n";
@@ -133,14 +133,14 @@ class SetManager : public DatabaseTypeManager {
            bool src_exists = data_.IsExist<Set>(args[1]);
            bool dest_exists = data_.IsExist<Set>(args[2]);
            if (!src_exists) return "(integer) 0\n";
-           auto &src = data_.Get<Set>(args[1]);
-           if (!src.IsMember(args[3])) return "(integer) 0\n";
-           src.Remove({args[3]});
-           size_t src_size_after = src.Size();
+           auto src = data_.Modify<Set>(args[1]);
+           if (!src->IsMember(args[3])) return "(integer) 0\n";
+           src->Remove({args[3]});
+           size_t src_size_after = src->Size();
            if (!dest_exists) {
              data_.Add<Set>(args[2], Set{});
            }
-           data_.Get<Set>(args[2]).Add({args[3]});
+           data_.Modify<Set>(args[2])->Add({args[3]});
            if (src_size_after == 0 && args[1] != args[2]) {
              data_.Delete(args[1]);
            }

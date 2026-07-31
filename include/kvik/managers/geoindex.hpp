@@ -23,7 +23,7 @@ class GeoIndexManager : public DatabaseTypeManager {
            if (!data_.IsExist<GeoIndex>(args[1])) {
              data_.Add<GeoIndex>(args[1], GeoIndex{});
            }
-           auto &geo = data_.Get<GeoIndex>(args[1]);
+           auto geo = data_.Modify<GeoIndex>(args[1]);
            int added = 0;
            for (int i = 2; i < (int)args.size(); i += 3) {
              double lon, lat;
@@ -33,8 +33,8 @@ class GeoIndexManager : public DatabaseTypeManager {
              } catch (...) {
                throw std::runtime_error("ERR value is not a valid float");
              }
-             bool exists = geo.HasMember(args[i + 2]);
-             geo.Add(lon, lat, args[i + 2]);
+             bool exists = geo->HasMember(args[i + 2]);
+             geo->Add(lon, lat, args[i + 2]);
              if (!exists) added++;
            }
            return "(integer) " + std::to_string(added) + "\n";
@@ -56,7 +56,7 @@ class GeoIndexManager : public DatabaseTypeManager {
                res += ") (nil)\n";
                continue;
              }
-             auto pos = data_.Get<GeoIndex>(args[1]).Pos(args[i]);
+             auto pos = data_.View<GeoIndex>(args[1]).Pos(args[i]);
              if (!pos) {
                res += std::to_string(idx);
                res += ") (nil)\n";
@@ -79,7 +79,7 @@ class GeoIndexManager : public DatabaseTypeManager {
                  "ERR wrong number of arguments for 'geodist' command");
            }
            if (!data_.IsExist<GeoIndex>(args[1])) return "(nil)\n";
-           auto &geo = data_.Get<GeoIndex>(args[1]);
+           auto &geo = data_.View<GeoIndex>(args[1]);
            auto dist_m = geo.Dist(args[2], args[3]);
            if (!dist_m) return "(nil)\n";
            std::string unit = (args.size() >= 5) ? args[4] : "m";
@@ -149,7 +149,7 @@ class GeoIndexManager : public DatabaseTypeManager {
       }
     }
 
-    auto &src = data_.Get<GeoIndex>(args[1]);
+    auto &src = data_.View<GeoIndex>(args[1]);
     auto results = src.Search(lon, lat, radius_m, asc, count);
     if (results.empty()) return "(empty array)\n";
 

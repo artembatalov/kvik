@@ -23,10 +23,10 @@ class ListManager : public DatabaseTypeManager {
            if (!data_.IsExist<List>(args[1])) {
              data_.Add<List>(args[1], List{});
            }
-           auto &list = data_.Get<List>(args[1]);
-           list.PushLeft(
+           auto list = data_.Modify<List>(args[1]);
+           list->PushLeft(
                std::vector<std::string>(args.begin() + 2, args.end()));
-           return "(integer) " + std::to_string(list.Size()) + "\n";
+           return "(integer) " + std::to_string(list->Size()) + "\n";
          }},
 
         {"RPUSH",
@@ -38,10 +38,10 @@ class ListManager : public DatabaseTypeManager {
            if (!data_.IsExist<List>(args[1])) {
              data_.Add<List>(args[1], List{});
            }
-           auto &list = data_.Get<List>(args[1]);
-           list.PushRight(
+           auto list = data_.Modify<List>(args[1]);
+           list->PushRight(
                std::vector<std::string>(args.begin() + 2, args.end()));
-           return "(integer) " + std::to_string(list.Size()) + "\n";
+           return "(integer) " + std::to_string(list->Size()) + "\n";
          }},
 
         {"LPOP",
@@ -59,9 +59,13 @@ class ListManager : public DatabaseTypeManager {
                    "ERR value is out of range, must be positive");
              }
            }
-           auto &list = data_.Get<List>(args[1]);
-           auto popped = list.PopLeft(count);
-           bool empty = (list.Size() == 0);
+           bool empty;
+           std::vector<std::string> popped;
+           {
+             auto list = data_.Modify<List>(args[1]);
+             popped = list->PopLeft(count);
+             empty = (list->Size() == 0);
+           }
            if (empty) data_.Delete(args[1]);
            if (popped.empty()) return "(nil)\n";
            if (args.size() < 3) return "\"" + popped[0] + "\"\n";
@@ -83,9 +87,13 @@ class ListManager : public DatabaseTypeManager {
                    "ERR value is out of range, must be positive");
              }
            }
-           auto &list = data_.Get<List>(args[1]);
-           auto popped = list.PopRight(count);
-           bool empty = (list.Size() == 0);
+           std::vector<std::string> popped;
+           bool empty;
+           {
+             auto list = data_.Modify<List>(args[1]);
+             popped = list->PopRight(count);
+             empty = (list->Size() == 0);
+           }
            if (empty) data_.Delete(args[1]);
            if (popped.empty()) return "(nil)\n";
            if (args.size() < 3) return "\"" + popped[0] + "\"\n";
@@ -100,7 +108,7 @@ class ListManager : public DatabaseTypeManager {
            }
            if (!data_.IsExist<List>(args[1])) return "(integer) 0\n";
            return "(integer) " +
-                  std::to_string(data_.Get<List>(args[1]).Size()) + "\n";
+                  std::to_string(data_.View<List>(args[1]).Size()) + "\n";
          }},
 
         {"LRANGE",
@@ -110,7 +118,7 @@ class ListManager : public DatabaseTypeManager {
                  "ERR wrong number of arguments for 'lrange' command");
            }
            if (!data_.IsExist<List>(args[1])) return "(empty array)\n";
-           auto elems = data_.Get<List>(args[1]).Range(ParseInt(args[2]),
+           auto elems = data_.View<List>(args[1]).Range(ParseInt(args[2]),
                                                        ParseInt(args[3]));
            if (elems.empty()) return "(empty array)\n";
            return FormatList(elems);
@@ -124,7 +132,7 @@ class ListManager : public DatabaseTypeManager {
            }
            if (!data_.IsExist<List>(args[1])) return "(nil)\n";
            try {
-             return "\"" + data_.Get<List>(args[1]).Index(ParseInt(args[2])) +
+             return "\"" + data_.View<List>(args[1]).Index(ParseInt(args[2])) +
                     "\"\n";
            } catch (const std::runtime_error &e) {
              if (std::string(e.what()) == "ERR index out of range")
@@ -142,7 +150,7 @@ class ListManager : public DatabaseTypeManager {
            if (!data_.IsExist<List>(args[1])) {
              throw std::runtime_error("ERR no such key");
            }
-           data_.Get<List>(args[1]).Set(ParseInt(args[2]), args[3]);
+           data_.Modify<List>(args[1])->Set(ParseInt(args[2]), args[3]);
            return "OK\n";
          }},
 
@@ -158,10 +166,10 @@ class ListManager : public DatabaseTypeManager {
              throw std::runtime_error("ERR syntax error");
            }
            bool before = (dir == "BEFORE");
-           auto &list = data_.Get<List>(args[1]);
-           bool ok = list.Insert(args[3], args[4], before);
+           auto list = data_.Modify<List>(args[1]);
+           bool ok = list->Insert(args[3], args[4], before);
            if (!ok) return "(integer) -1\n";
-           return "(integer) " + std::to_string(list.Size()) + "\n";
+           return "(integer) " + std::to_string(list->Size()) + "\n";
          }}};
   }
 

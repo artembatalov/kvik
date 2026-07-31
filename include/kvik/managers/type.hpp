@@ -14,10 +14,6 @@ class DatabaseTypeManager {
 
   DatabaseTypeManager(DatabaseData &data) : data_(data) {}
 
-  bool IsCommand(std::string cmd) { return commands_.contains(cmd); }
-
-  std::string Execute(Args cmd) { return commands_[cmd[0]](cmd); }
-
   const Commands &GetCommands() { return commands_; }
 
  protected:

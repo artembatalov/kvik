@@ -20,25 +20,6 @@ class Database {
       std::unordered_map<std::string, std::function<std::string(const Args &)>>;
 
   Database(uint64_t max_memory = 0) : data_(DatabaseData(max_memory)) {
-    ManagersInit();
-  }
-
-  std::string ProcessCommand(const std::string &cmd) {
-    Args parsed = parser_.Parse(cmd);
-    auto found_it = commands_.find(parsed[0]);
-    if (found_it == commands_.end()) {
-      throw std::runtime_error("ERR unknown command '" + parsed[0] + "'");
-    }
-    if (data_.IsEnabledTTL()) {
-      time_t now = std::time(nullptr);
-      data_.CleanExpired(now);
-      data_.SetNow(now);
-    }
-    return found_it->second(parsed);
-  }
-
- private:
-  void ManagersInit() {
     managers_.push_back(std::make_unique<DatabaseManager>(data_));
     managers_.push_back(std::make_unique<StringManager>(data_));
     managers_.push_back(std::make_unique<SetManager>(data_));
@@ -51,6 +32,20 @@ class Database {
       }
     }
   }
+
+  std::string ProcessCommand(const std::string &cmd) {
+    Args parsed = parser_.Parse(cmd);
+    auto found_it = commands_.find(parsed[0]);
+    if (found_it == commands_.end()) {
+      throw std::runtime_error("ERR unknown command '" + parsed[0] + "'");
+    }
+    if (data_.IsEnabledTTL()) {
+      data_.CleanExpired();
+    }
+    return found_it->second(parsed);
+  }
+
+ private:
 
   std::vector<std::unique_ptr<DatabaseTypeManager>> managers_;
   DatabaseData data_;

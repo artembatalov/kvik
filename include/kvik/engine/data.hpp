@@ -16,6 +16,34 @@
 
 class DatabaseData {
  public:
+  template <typename Type>
+  class MemoryGuard {
+   public:
+    MemoryGuard(DatabaseData &db, Type &ref)
+        : db_(db), ref_(ref), before_(ref.MemoryUsage()) {}
+    ~MemoryGuard() {
+      db_.current_memory_ = db_.current_memory_ - before_ + ref_.MemoryUsage();
+    }
+    MemoryGuard(const MemoryGuard &) = delete;
+    Type *operator->() { return &ref_; }
+    const Type *operator->() const { return &ref_; }
+
+   private:
+    DatabaseData &db_;
+    Type &ref_;
+    size_t before_;
+  };
+
+  template <typename Type>
+  MemoryGuard<Type> Modify(const std::string &key) {
+    return MemoryGuard<Type>(*this, Get<Type>(key));
+  }
+
+  template <typename Type>
+  const Type &View(const std::string &key) {
+    return Get<Type>(key);
+  }
+
   DatabaseData(const uint64_t &max_memory = 0) {
     max_memory_ = max_memory;
     max_memory_set_ = (max_memory_ != 0);
@@ -39,21 +67,6 @@ class DatabaseData {
     } else {
       data_.emplace(key, Value{.element = value, .ttl = 0});
     }
-  }
-
-  template <typename Type>
-  Type &Get(const std::string &key) {
-    auto it = data_.find(key);
-    if (it == data_.end()) throw std::runtime_error("ERR no such key");
-    if (it->second.ttl > 0 && now_ > 0 && now_ >= it->second.ttl) {
-      current_memory_ -= EntryMemory(it->first, it->second);
-      data_.erase(it);
-      throw std::runtime_error("ERR no such key");
-    }
-    if (!std::holds_alternative<Type>(it->second.element))
-      throw std::runtime_error(
-          "WRONGTYPE Operation against a key holding the wrong kind of value");
-    return std::get<Type>(it->second.element);
   }
 
   template <typename Type>
@@ -81,7 +94,8 @@ class DatabaseData {
   bool IsExist(const std::string &key) {
     auto it = data_.find(key);
     if (it == data_.end()) return false;
-    if (it->second.ttl > 0 && now_ > 0 && now_ >= it->second.ttl) {
+    std::time_t now = std::time(nullptr);
+    if (it->second.ttl > 0 && now > 0 && now >= it->second.ttl) {
       current_memory_ -= EntryMemory(it->first, it->second);
       data_.erase(it);
       return false;
@@ -147,7 +161,8 @@ class DatabaseData {
 
   void EnableTTL() { ttl_enabled_ = true; }
 
-  void CleanExpired(time_t now = std::time(nullptr)) {
+  void CleanExpired() {
+    std::time_t now = std::time(nullptr);
     while (!expiry_queue_.empty() && expiry_queue_.top().first <= now) {
       auto [exp_time, key] = expiry_queue_.top();
       expiry_queue_.pop();
@@ -165,7 +180,7 @@ class DatabaseData {
     return EntryMemory(it->first, it->second);
   }
 
-  size_t TotalMemory() { return current_memory_; }
+  size_t TotalMemory() const { return current_memory_; }
 
   void SetMaxMemory(const uint64_t &bytes) {
     max_memory_ = bytes;
@@ -173,8 +188,6 @@ class DatabaseData {
   }
 
   uint64_t GetMaxMemory() const { return max_memory_; }
-
-  void SetNow(time_t now) { now_ = now; }
 
  private:
   template <typename... Ts>
@@ -222,6 +235,21 @@ class DatabaseData {
                       std::greater<>>
       expiry_queue_;
 
-  time_t now_ = 0;
   size_t current_memory_ = 0;
+
+  template <typename Type>
+  Type &Get(const std::string &key) {
+    auto it = data_.find(key);
+    if (it == data_.end()) throw std::runtime_error("ERR no such key");
+    time_t now = std::time(nullptr);
+    if (it->second.ttl > 0 && now > 0 && now >= it->second.ttl) {
+      current_memory_ -= EntryMemory(it->first, it->second);
+      data_.erase(it);
+      throw std::runtime_error("ERR no such key");
+    }
+    if (!std::holds_alternative<Type>(it->second.element))
+      throw std::runtime_error(
+          "WRONGTYPE Operation against a key holding the wrong kind of value");
+    return std::get<Type>(it->second.element);
+  }
 };

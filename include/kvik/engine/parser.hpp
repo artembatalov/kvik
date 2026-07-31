@@ -12,9 +12,7 @@ class DatabaseParser {
   std::vector<std::string> Parse(const std::string& cmd) {
     parsed_.clear();
     Split(cmd);
-    if (parsed_.empty()) {
-      throw std::runtime_error("ERR empty command");
-    }
+    if (parsed_.empty()) throw std::runtime_error("ERR empty command");
     std::transform(parsed_[0].begin(), parsed_[0].end(), parsed_[0].begin(),
                    ::toupper);
     ProcessNWordsCommands();

@@ -7,24 +7,24 @@
 TEST(DatabaseData, Simple) {
   DatabaseData data(0);
   data.Add<String>(std::string("key"), std::string("value"));
-  ASSERT_EQ(data.Get<String>("key").GetString(), "value");
+  ASSERT_EQ(data.View<String>("key").GetString(), "value");
 }
 
 TEST(DatabaseData, AddAndGet) {
   DatabaseData db;
   db.Add("key", String("hello"));
-  EXPECT_EQ(db.Get<String>("key").GetString(), "hello");
+  EXPECT_EQ(db.View<String>("key").GetString(), "hello");
 }
 
 TEST(DatabaseData, GetMissingKeyThrows) {
   DatabaseData db;
-  EXPECT_THROW(db.Get<String>("missing"), std::runtime_error);
+  EXPECT_THROW(db.View<String>("missing"), std::runtime_error);
 }
 
 TEST(DatabaseData, GetWrongTypeThrows) {
   DatabaseData db;
   db.Add("key", String("hello"));
-  EXPECT_THROW(db.Get<List>("key"), std::runtime_error);
+  EXPECT_THROW(db.View<List>("key"), std::runtime_error);
 }
 
 TEST(DatabaseData, DeleteExistingKey) {
@@ -91,7 +91,7 @@ TEST(DatabaseData, OverwriteSameType) {
   DatabaseData db;
   db.Add("key", String("old"));
   db.Add("key", String("new"));
-  EXPECT_EQ(db.Get<String>("key").GetString(), "new");
+  EXPECT_EQ(db.View<String>("key").GetString(), "new");
   EXPECT_EQ(db.Size(), 1);
 }
 
@@ -176,11 +176,23 @@ TEST(DatabaseData, MemoryUsageMissingKeyZero) {
   EXPECT_EQ(db.MemoryUsage("missing"), 0);
 }
 
-TEST(DatabaseData, MemoryUsageAfterModification) {
+TEST(DatabaseData, MemoryUsageAfterModificationWithoutExpiration) {
   DatabaseData db;
   db.Add<List>("key", List());
   size_t previous_memory = db.TotalMemory();
-  List &key = db.Get<List>("key");
-  key.PushRight(std::vector<std::string> {"Bug", "could", "be", "here"});
+  {
+    auto key = db.Modify<List>("key");
+    key->PushRight(std::vector<std::string> {"Bug", "could", "be", "here"});
+  }
   EXPECT_NE(previous_memory, db.TotalMemory());
+}
+
+TEST(DatabaseData, SimpleTTL) {
+  DatabaseData db;
+  db.Add<String>("key", String("val"));
+  db.EnableTTL();
+  db.SetTTL("key", 2);
+  sleep(3);
+  db.CleanExpired();
+  EXPECT_FALSE(db.IsKey("key"));
 }
