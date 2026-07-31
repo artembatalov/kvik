@@ -107,6 +107,14 @@ TEST(DatabaseSet, SRem) {
   EXPECT_EQ(db.ProcessCommand("SCARD myset"), "(integer) 1\n");
 }
 
+TEST(DatabaseSet, SRemDrainsSetToEmpty) {
+  Database db;
+  db.ProcessCommand("SADD myset a");
+  EXPECT_EQ(db.ProcessCommand("SREM myset a"), "(integer) 1\n");
+  EXPECT_EQ(db.ProcessCommand("EXISTS myset"), "(integer) 0\n");
+  EXPECT_EQ(db.ProcessCommand("DBSIZE"), "(integer) 0\n");
+}
+
 TEST(DatabaseSet, SIsMember) {
   Database db;
   db.ProcessCommand("SADD myset a b");
@@ -162,6 +170,15 @@ TEST(DatabaseSet, SMove) {
   db.ProcessCommand("SADD s2 c");
   EXPECT_EQ(db.ProcessCommand("SMOVE s1 s2 a"), "(integer) 1\n");
   EXPECT_EQ(db.ProcessCommand("SISMEMBER s1 a"), "(integer) 0\n");
+  EXPECT_EQ(db.ProcessCommand("SISMEMBER s2 a"), "(integer) 1\n");
+}
+
+TEST(DatabaseSet, SMoveDrainsSourceSet) {
+  Database db;
+  db.ProcessCommand("SADD s1 a");
+  db.ProcessCommand("SADD s2 b");
+  EXPECT_EQ(db.ProcessCommand("SMOVE s1 s2 a"), "(integer) 1\n");
+  EXPECT_EQ(db.ProcessCommand("EXISTS s1"), "(integer) 0\n");
   EXPECT_EQ(db.ProcessCommand("SISMEMBER s2 a"), "(integer) 1\n");
 }
 

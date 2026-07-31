@@ -196,3 +196,21 @@ TEST(DatabaseData, SimpleTTL) {
   db.CleanExpired();
   EXPECT_FALSE(db.IsKey("key"));
 }
+
+TEST(DatabaseData, ViewExpiresLazilyWithoutCleanExpired) {
+  DatabaseData db;
+  db.Add<String>("key", String("val"));
+  db.EnableTTL();
+  db.SetTTL("key", 2);
+  sleep(3);
+  EXPECT_THROW(db.View<String>("key"), std::runtime_error);
+}
+
+TEST(DatabaseData, IsExistExpiresLazilyWithoutCleanExpired) {
+  DatabaseData db;
+  db.Add<String>("key", String("val"));
+  db.EnableTTL();
+  db.SetTTL("key", 2);
+  sleep(3);
+  EXPECT_FALSE(db.IsExist<String>("key"));
+}

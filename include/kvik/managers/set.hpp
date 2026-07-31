@@ -33,11 +33,14 @@ class SetManager : public DatabaseTypeManager {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'srem' command");
            }
+           size_t after, before;
            if (!data_.IsExist<Set>(args[1])) return "(integer) 0\n";
-           auto s = data_.Modify<Set>(args[1]);
-           size_t before = s->Size();
-           s->Remove(std::vector<std::string>(args.begin() + 2, args.end()));
-           size_t after = s->Size();
+           {
+             auto s = data_.Modify<Set>(args[1]);
+             before = s->Size();
+             s->Remove(std::vector<std::string>(args.begin() + 2, args.end()));
+             after = s->Size();
+           }
            if (after == 0) data_.Delete(args[1]);
            return "(integer) " + std::to_string(before - after) + "\n";
          }},
@@ -50,7 +53,7 @@ class SetManager : public DatabaseTypeManager {
            }
            if (!data_.IsExist<Set>(args[1])) return "(integer) 0\n";
            return data_.View<Set>(args[1]).IsMember(args[2]) ? "(integer) 1\n"
-                                                            : "(integer) 0\n";
+                                                             : "(integer) 0\n";
          }},
 
         {"SMEMBERS",
@@ -133,10 +136,13 @@ class SetManager : public DatabaseTypeManager {
            bool src_exists = data_.IsExist<Set>(args[1]);
            bool dest_exists = data_.IsExist<Set>(args[2]);
            if (!src_exists) return "(integer) 0\n";
-           auto src = data_.Modify<Set>(args[1]);
-           if (!src->IsMember(args[3])) return "(integer) 0\n";
-           src->Remove({args[3]});
-           size_t src_size_after = src->Size();
+           size_t src_size_after;
+           {
+             auto src = data_.Modify<Set>(args[1]);
+             if (!src->IsMember(args[3])) return "(integer) 0\n";
+             src->Remove({args[3]});
+             src_size_after = src->Size();
+           }
            if (!dest_exists) {
              data_.Add<Set>(args[2], Set{});
            }
