@@ -196,7 +196,7 @@ TEST(DatabaseData, SimpleTTL) {
   db.Add<String>("key", String("val"));
   db.EnableTTL();
   db.SetTTL("key", 2);
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+  std::this_thread::sleep_for(std::chrono::seconds(2));
   db.CleanExpired();
   EXPECT_FALSE(db.IsKey("key"));
 }
@@ -206,7 +206,7 @@ TEST(DatabaseData, ViewExpiresLazilyWithoutCleanExpired) {
   db.Add<String>("key", String("val"));
   db.EnableTTL();
   db.SetTTL("key", 2);
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+  std::this_thread::sleep_for(std::chrono::seconds(2));
   EXPECT_THROW(db.View<String>("key"), std::runtime_error);
 }
 
@@ -215,6 +215,6 @@ TEST(DatabaseData, IsExistExpiresLazilyWithoutCleanExpired) {
   db.Add<String>("key", String("val"));
   db.EnableTTL();
   db.SetTTL("key", 2);
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+  std::this_thread::sleep_for(std::chrono::seconds(2));
   EXPECT_FALSE(db.IsExist<String>("key"));
 }
