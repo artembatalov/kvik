@@ -46,10 +46,11 @@ jobs:
     - name: Test
       run: ctest --test-dir build --output-on-failure
     - name: Generate coverage report
-      run: >
-        gcovr --root . --filter 'include/' --filter 'src/'
-        --html --html-details -o build/coverage/index.html
-        --print-summary
+      run: |
+        mkdir -p build/coverage
+        gcovr --root . --filter 'include/' --filter 'src/' \
+          --html --html-details -o build/coverage/index.html \
+          --print-summary
     - name: Upload coverage report
       uses: actions/upload-artifact@v4
       with:
