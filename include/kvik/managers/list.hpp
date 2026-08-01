@@ -20,8 +20,11 @@ class ListManager : public DatabaseTypeManager {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'lpush' command");
            }
-           if (!data_.IsExist<List>(args[1])) {
+           if (!data_.IsExist(args[1])) {
              data_.Add<List>(args[1], List{});
+           }
+           if (!data_.IsMatch<List>(args[1])) {
+             throw std::runtime_error("WRONGTYPE");
            }
            auto list = data_.Modify<List>(args[1]);
            list->PushLeft(
@@ -35,8 +38,11 @@ class ListManager : public DatabaseTypeManager {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'rpush' command");
            }
-           if (!data_.IsExist<List>(args[1])) {
+           if (!data_.IsExist(args[1])) {
              data_.Add<List>(args[1], List{});
+           }
+           if (!data_.IsMatch<List>(args[1])) {
+             throw std::runtime_error("WRONGTYPE");
            }
            auto list = data_.Modify<List>(args[1]);
            list->PushRight(
@@ -50,7 +56,10 @@ class ListManager : public DatabaseTypeManager {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'lpop' command");
            }
-           if (!data_.IsExist<List>(args[1])) return "(nil)\n";
+           if (!data_.IsExist(args[1])) return "(nil)\n";
+           if (!data_.IsMatch<List>(args[1])) {
+             throw std::runtime_error("WRONGTYPE");
+           }
            int count = 1;
            if (args.size() >= 3) {
              count = ParseInt(args[2]);
@@ -78,7 +87,10 @@ class ListManager : public DatabaseTypeManager {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'rpop' command");
            }
-           if (!data_.IsExist<List>(args[1])) return "(nil)\n";
+           if (!data_.IsExist(args[1])) return "(nil)\n";
+           if (!data_.IsMatch<List>(args[1])) {
+             throw std::runtime_error("WRONGTYPE");
+           }
            int count = 1;
            if (args.size() >= 3) {
              count = ParseInt(args[2]);
@@ -106,7 +118,10 @@ class ListManager : public DatabaseTypeManager {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'llen' command");
            }
-           if (!data_.IsExist<List>(args[1])) return "(integer) 0\n";
+           if (!data_.IsExist(args[1])) return "(integer) 0\n";
+           if (!data_.IsMatch<List>(args[1])) {
+             throw std::runtime_error("WRONGTYPE");
+           }
            return "(integer) " +
                   std::to_string(data_.View<List>(args[1]).Size()) + "\n";
          }},
@@ -117,7 +132,10 @@ class ListManager : public DatabaseTypeManager {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'lrange' command");
            }
-           if (!data_.IsExist<List>(args[1])) return "(empty array)\n";
+           if (!data_.IsExist(args[1])) return "(empty array)\n";
+           if (!data_.IsMatch<List>(args[1])) {
+             throw std::runtime_error("WRONGTYPE");
+           }
            auto elems = data_.View<List>(args[1]).Range(ParseInt(args[2]),
                                                         ParseInt(args[3]));
            if (elems.empty()) return "(empty array)\n";
@@ -130,7 +148,10 @@ class ListManager : public DatabaseTypeManager {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'lindex' command");
            }
-           if (!data_.IsExist<List>(args[1])) return "(nil)\n";
+           if (!data_.IsExist(args[1])) return "(nil)\n";
+           if (!data_.IsMatch<List>(args[1])) {
+             throw std::runtime_error("WRONGTYPE");
+           }
            try {
              return "\"" + data_.View<List>(args[1]).Index(ParseInt(args[2])) +
                     "\"\n";
@@ -147,8 +168,11 @@ class ListManager : public DatabaseTypeManager {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'lset' command");
            }
-           if (!data_.IsExist<List>(args[1])) {
+           if (!data_.IsExist(args[1])) {
              throw std::runtime_error("ERR no such key");
+           }
+           if (!data_.IsMatch<List>(args[1])) {
+             throw std::runtime_error("WRONGTYPE");
            }
            data_.Modify<List>(args[1])->Set(ParseInt(args[2]), args[3]);
            return "OK\n";
@@ -159,7 +183,10 @@ class ListManager : public DatabaseTypeManager {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'linsert' command");
            }
-           if (!data_.IsExist<List>(args[1])) return "(integer) 0\n";
+           if (!data_.IsExist(args[1])) return "(integer) 0\n";
+           if (!data_.IsMatch<List>(args[1])) {
+             throw std::runtime_error("WRONGTYPE");
+           }
            std::string dir = args[2];
            std::transform(dir.begin(), dir.end(), dir.begin(), ::toupper);
            if (dir != "BEFORE" && dir != "AFTER") {

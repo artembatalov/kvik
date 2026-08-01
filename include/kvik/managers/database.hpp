@@ -31,7 +31,7 @@ class DatabaseManager : public DatabaseTypeManager {
            }
            int deleted = 0;
            for (int i = 1; i < (int)args.size(); i++) {
-             if (data_.IsKey(args[i])) {
+             if (data_.IsExist(args[i])) {
                data_.Delete(args[i]);
                deleted++;
              }
@@ -47,7 +47,7 @@ class DatabaseManager : public DatabaseTypeManager {
            }
            int count = 0;
            for (int i = 1; i < (int)args.size(); i++) {
-             if (data_.IsKey(args[i])) count++;
+             if (data_.IsExist(args[i])) count++;
            }
            return "(integer) " + std::to_string(count) + "\n";
          }},
@@ -111,7 +111,7 @@ class DatabaseManager : public DatabaseTypeManager {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'memory|usage' command");
            }
-           if (!data_.IsKey(args[1])) return "(nil)\n";
+           if (!data_.IsExist(args[1])) return "(nil)\n";
            return "(integer) " + std::to_string(data_.MemoryUsage(args[1])) +
                   "\n";
          }},
@@ -122,7 +122,7 @@ class DatabaseManager : public DatabaseTypeManager {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'expire' command");
            }
-           if (!data_.IsKey(args[1])) return "(integer) 0\n";
+           if (!data_.IsExist(args[1])) return "(integer) 0\n";
            int seconds;
            try {
              seconds = std::stoi(args[2]);

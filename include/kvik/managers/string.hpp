@@ -28,7 +28,10 @@ class StringManager : public DatabaseTypeManager {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'get' command");
            }
-           if (!data_.IsExist<String>(args[1])) return "(nil)\n";
+           if (!data_.IsExist(args[1])) return "(nil)\n";
+           if (!data_.IsMatch<String>(args[1])) {
+             throw std::runtime_error("WRONGTYPE");
+           }
            return "\"" + data_.View<String>(args[1]).GetString() + "\"\n";
          }},
 
@@ -38,7 +41,10 @@ class StringManager : public DatabaseTypeManager {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'strlen' command");
            }
-           if (!data_.IsExist<String>(args[1])) return "(integer) 0\n";
+           if (!data_.IsExist(args[1])) return "(integer) 0\n";
+           if (!data_.IsMatch<String>(args[1])) {
+             throw std::runtime_error("WRONGTYPE");
+           }
            return "(integer) " +
                   std::to_string(data_.View<String>(args[1]).Size()) + "\n";
          }},
@@ -48,7 +54,10 @@ class StringManager : public DatabaseTypeManager {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'append' command");
            }
-           if (data_.IsExist<String>(args[1])) {
+           if (data_.IsExist(args[1])) {
+             if (!data_.IsMatch<String>(args[1])) {
+               throw std::runtime_error("WRONGTYPE");
+             }
              auto s = data_.Modify<String>(args[1]);
              s->Append(args[2]);
              return "(integer) " + std::to_string(s->Size()) + "\n";

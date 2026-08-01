@@ -20,8 +20,12 @@ class GeoIndexManager : public DatabaseTypeManager {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'geoadd' command");
            }
-           if (!data_.IsExist<GeoIndex>(args[1])) {
+           if (!data_.IsExist(args[1])) {
              data_.Add<GeoIndex>(args[1], GeoIndex{});
+           }
+           if (!data_.IsMatch<GeoIndex>(args[1])) {
+             throw std::runtime_error(
+                  "ERR type error");
            }
            auto geo = data_.Modify<GeoIndex>(args[1]);
            int added = 0;
@@ -48,7 +52,10 @@ class GeoIndexManager : public DatabaseTypeManager {
            }
            std::string res;
            res.reserve((args.size() - 2) * 48);
-           bool exists = data_.IsExist<GeoIndex>(args[1]);
+           bool exists = data_.IsExist(args[1]);
+           if (exists && !data_.IsMatch<GeoIndex>(args[1])) {
+             throw std::runtime_error("WRONGTYPE");
+           }
            for (int i = 2; i < (int)args.size(); i++) {
              int idx = i - 1;
              if (!exists) {
@@ -78,7 +85,10 @@ class GeoIndexManager : public DatabaseTypeManager {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'geodist' command");
            }
-           if (!data_.IsExist<GeoIndex>(args[1])) return "(nil)\n";
+           if (!data_.IsExist(args[1])) return "(nil)\n";
+           if (!data_.IsMatch<GeoIndex>(args[1])) {
+             throw std::runtime_error("WRONGTYPE");
+           }
            auto& geo = data_.View<GeoIndex>(args[1]);
            auto dist_m = geo.Dist(args[2], args[3]);
            if (!dist_m) return "(nil)\n";
@@ -117,7 +127,10 @@ class GeoIndexManager : public DatabaseTypeManager {
       throw std::runtime_error(
           "ERR wrong number of arguments for 'geosearch' command");
     }
-    if (!data_.IsExist<GeoIndex>(args[1])) return "(empty array)\n";
+    if (!data_.IsExist(args[1])) return "(empty array)\n";
+    if (!data_.IsMatch<GeoIndex>(args[1])) {
+      throw std::runtime_error("WRONGTYPE");
+    }
     double lon, lat, radius;
     try {
       lon = std::stod(args[3]);

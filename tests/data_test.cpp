@@ -35,7 +35,7 @@ TEST(DatabaseData, DeleteExistingKey) {
   DatabaseData db;
   db.Add("key", String("hello"));
   db.Delete("key");
-  EXPECT_FALSE(db.IsKey("key"));
+  EXPECT_FALSE(db.IsExist("key"));
 }
 
 TEST(DatabaseData, DeleteMissingKeyNoThrow) {
@@ -46,8 +46,8 @@ TEST(DatabaseData, DeleteMissingKeyNoThrow) {
 TEST(DatabaseData, IsKey) {
   DatabaseData db;
   db.Add("key", String("hello"));
-  EXPECT_TRUE(db.IsKey("key"));
-  EXPECT_FALSE(db.IsKey("missing"));
+  EXPECT_TRUE(db.IsExist("key"));
+  EXPECT_FALSE(db.IsExist("missing"));
 }
 
 TEST(DatabaseData, TypeReturnsCorrectType) {
@@ -64,7 +64,7 @@ TEST(DatabaseData, ExtractRemovesKey) {
   db.Add("key", String("hello"));
   String val = db.Extract<String>("key");
   EXPECT_EQ(val.GetString(), "hello");
-  EXPECT_FALSE(db.IsKey("key"));
+  EXPECT_FALSE(db.IsExist("key"));
 }
 
 TEST(DatabaseData, ExtractMissingKeyThrows) {
@@ -124,14 +124,14 @@ TEST(DatabaseData, CleanExpiredKeepsLiveKeys) {
   db.Add("live", String("val"));
   db.SetTTL("live", 100);
   db.CleanExpired();
-  EXPECT_TRUE(db.IsKey("live"));
+  EXPECT_TRUE(db.IsExist("live"));
 }
 
 TEST(DatabaseData, CleanExpiredDoesNothingIfDisabled) {
   DatabaseData db;
   db.Add("key", String("val"));
   db.CleanExpired();
-  EXPECT_TRUE(db.IsKey("key"));
+  EXPECT_TRUE(db.IsExist("key"));
 }
 
 TEST(DatabaseData, OOMThrowsOnExceedingLimit) {
@@ -198,7 +198,7 @@ TEST(DatabaseData, SimpleTTL) {
   db.SetTTL("key", 2);
   std::this_thread::sleep_for(std::chrono::seconds(2));
   db.CleanExpired();
-  EXPECT_FALSE(db.IsKey("key"));
+  EXPECT_FALSE(db.IsExist("key"));
 }
 
 TEST(DatabaseData, ViewExpiresLazilyWithoutCleanExpired) {
@@ -216,5 +216,5 @@ TEST(DatabaseData, IsExistExpiresLazilyWithoutCleanExpired) {
   db.EnableTTL();
   db.SetTTL("key", 2);
   std::this_thread::sleep_for(std::chrono::seconds(2));
-  EXPECT_FALSE(db.IsExist<String>("key"));
+  EXPECT_FALSE(db.IsExist("key"));
 }

@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
+#include <type_traits>
 
 #include "../types/geoindex.hpp"
 #include "../types/list.hpp"
@@ -90,7 +91,6 @@ class DatabaseData {
     data_.erase(it);
   }
 
-  template <typename Type>
   bool IsExist(const std::string& key) {
     auto it = data_.find(key);
     if (it == data_.end()) return false;
@@ -99,14 +99,15 @@ class DatabaseData {
       current_memory_ -= EntryMemory(it->first, it->second);
       data_.erase(it);
       return false;
+    } else {
+      return true;
     }
-    if (!std::holds_alternative<Type>(it->second.element))
-      throw std::runtime_error(
-          "WRONGTYPE Operation against a key holding the wrong kind of value");
-    return true;
   }
 
-  bool IsKey(const std::string& key) { return data_.contains(key); }
+  template <typename Type>
+  bool IsMatch(const std::string& key) {
+    return !std::is_same<Type, decltype(data_.find(key)->second)>::value;
+  }
 
   std::string Type(const std::string& key) {
     auto it = data_.find(key);

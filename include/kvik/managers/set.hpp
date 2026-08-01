@@ -18,8 +18,11 @@ class SetManager : public DatabaseTypeManager {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'sadd' command");
            }
-           if (!data_.IsExist<Set>(args[1])) {
+           if (!data_.IsExist(args[1])) {
              data_.Add<Set>(args[1], Set{});
+           }
+           if (!data_.IsMatch<Set>(args[1])) {
+             throw std::runtime_error("WRONGTYPE");
            }
            auto s = data_.Modify<Set>(args[1]);
            size_t before = s->Size();
@@ -34,12 +37,15 @@ class SetManager : public DatabaseTypeManager {
                  "ERR wrong number of arguments for 'srem' command");
            }
            size_t after, before;
-           if (!data_.IsExist<Set>(args[1])) return "(integer) 0\n";
+           if (!data_.IsExist(args[1])) return "(integer) 0\n";
            {
              auto s = data_.Modify<Set>(args[1]);
              before = s->Size();
              s->Remove(std::vector<std::string>(args.begin() + 2, args.end()));
              after = s->Size();
+           }
+           if (!data_.IsMatch<Set>(args[1])) {
+             throw std::runtime_error("WRONGTYPE");
            }
            if (after == 0) data_.Delete(args[1]);
            return "(integer) " + std::to_string(before - after) + "\n";
@@ -51,7 +57,10 @@ class SetManager : public DatabaseTypeManager {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'sismember' command");
            }
-           if (!data_.IsExist<Set>(args[1])) return "(integer) 0\n";
+           if (!data_.IsExist(args[1])) return "(integer) 0\n";
+           if (!data_.IsMatch<Set>(args[1])) {
+             throw std::runtime_error("WRONGTYPE");
+           }
            return data_.View<Set>(args[1]).IsMember(args[2]) ? "(integer) 1\n"
                                                              : "(integer) 0\n";
          }},
@@ -62,7 +71,10 @@ class SetManager : public DatabaseTypeManager {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'smembers' command");
            }
-           if (!data_.IsExist<Set>(args[1])) return "(empty set)\n";
+           if (!data_.IsExist(args[1])) return "(empty set)\n";
+           if (!data_.IsMatch<Set>(args[1])) {
+             throw std::runtime_error("WRONGTYPE");
+           }
            auto& members = data_.View<Set>(args[1]).GetSet();
            return FormatSet(members);
          }},
@@ -73,7 +85,10 @@ class SetManager : public DatabaseTypeManager {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'scard' command");
            }
-           if (!data_.IsExist<Set>(args[1])) return "(integer) 0\n";
+           if (!data_.IsExist(args[1])) return "(integer) 0\n";
+           if (!data_.IsMatch<Set>(args[1])) {
+             throw std::runtime_error("WRONGTYPE");
+           }
            return "(integer) " +
                   std::to_string(data_.View<Set>(args[1]).Size()) + "\n";
          }},
@@ -86,8 +101,12 @@ class SetManager : public DatabaseTypeManager {
            }
            Set sunion;
            for (int i = 1; i < (int)args.size(); i++) {
-             if (data_.IsExist<Set>(args[i]))
+             if (data_.IsExist(args[i])) {
+               if (!data_.IsMatch<Set>(args[i])) {
+                 throw std::runtime_error("WRONGTYPE");
+               }
                sunion.Add(data_.View<Set>(args[i]));
+             }
            }
            auto& members = sunion.GetSet();
            if (members.empty()) return "(empty set)\n";
@@ -100,10 +119,16 @@ class SetManager : public DatabaseTypeManager {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'sinter' command");
            }
-           if (!data_.IsExist<Set>(args[1])) return "(empty set)\n";
+           if (!data_.IsExist(args[1])) return "(empty set)\n";
+           if (!data_.IsMatch<Set>(args[1])) {
+             throw std::runtime_error("WRONGTYPE");
+           }
            Set result = data_.View<Set>(args[1]);
            for (int i = 2; i < (int)args.size(); i++) {
-             if (!data_.IsExist<Set>(args[i])) return "(empty set)\n";
+             if (!data_.IsExist(args[i])) return "(empty set)\n";
+             if (!data_.IsMatch<Set>(args[i])) {
+               throw std::runtime_error("WRONGTYPE");
+             }
              result = result.Intersect(data_.View<Set>(args[i]));
            }
            auto& members = result.GetSet();
@@ -117,11 +142,18 @@ class SetManager : public DatabaseTypeManager {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'sdiff' command");
            }
-           if (!data_.IsExist<Set>(args[1])) return "(empty set)\n";
+           if (!data_.IsExist(args[1])) return "(empty set)\n";
+           if (!data_.IsMatch<Set>(args[1])) {
+             throw std::runtime_error("WRONGTYPE");
+           }
            Set result = data_.View<Set>(args[1]);
            for (int i = 2; i < (int)args.size(); i++) {
-             if (data_.IsExist<Set>(args[i]))
+             if (data_.IsExist(args[i])) {
+               if (!data_.IsMatch<Set>(args[i])) {
+                 throw std::runtime_error("WRONGTYPE");
+               }
                result = result.Diff(data_.View<Set>(args[i]));
+             }
            }
            auto& members = result.GetSet();
            if (members.empty()) return "(empty set)\n";
@@ -133,8 +165,14 @@ class SetManager : public DatabaseTypeManager {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'smove' command");
            }
-           bool src_exists = data_.IsExist<Set>(args[1]);
-           bool dest_exists = data_.IsExist<Set>(args[2]);
+           bool src_exists = data_.IsExist(args[1]);
+           if (src_exists && !data_.IsMatch<Set>(args[1])) {
+             throw std::runtime_error("WRONGTYPE");
+           }
+           bool dest_exists = data_.IsExist(args[2]);
+           if (dest_exists && !data_.IsMatch<Set>(args[2])) {
+             throw std::runtime_error("WRONGTYPE");
+           }
            if (!src_exists) return "(integer) 0\n";
            size_t src_size_after;
            {
