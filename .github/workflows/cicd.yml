@@ -3,57 +3,274 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore: ['**.md', 'docs/**', 'LICENSE']
   pull_request:
     branches: [main]
+    paths-ignore: ['**.md', 'docs/**', 'LICENSE']
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
+  format:
+    name: Code style
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format-18
+
+      - name: Check formatting
+        run: |
+          files=$(git ls-files '*.cpp' '*.hpp' '*.h' '*.cc' '*.cxx')
+          if [ -z "$files" ]; then
+            echo "Нет C++ файлов для проверки"
+            exit 0
+          fi
+          clang-format-18 --dry-run --Werror --style=file $files
+
+  build:
+    name: ${{ matrix.name }}
+    needs: format
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux GCC
+            os: ubuntu-latest
+            cc: gcc-13
+            cxx: g++-13
+            use_ccache: true
+          - name: Linux Clang
+            os: ubuntu-latest
+            cc: clang-18
+            cxx: clang++-18
+            use_ccache: true
+          - name: macOS AppleClang
+            os: macos-latest
+            cc: clang
+            cxx: clang++
+            use_ccache: true
+          - name: Windows MSVC
+            os: windows-latest
+            cc: cl
+            cxx: cl
+            use_ccache: false
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libcurl4-openssl-dev
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev ninja-build
 
-    - name: Configure
-      run: cmake -B build -DMYLIB_BUILD_EXAMPLES=ON -DCMAKE_BUILD_TYPE=Debug
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ninja curl
 
-    - name: Build
-      run: cmake --build build
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: vcpkg install curl:x64-windows
 
-    - name: Test
-      run: ctest --test-dir build --output-on-failure
+      - name: Setup ccache
+        if: matrix.use_ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ matrix.os }}-${{ matrix.cc }}
+          max-size: 500M
+
+      - name: Configure
+        shell: bash
+        env:
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+        run: |
+          EXTRA=""
+          if [ "${{ matrix.use_ccache }}" = "true" ]; then
+            EXTRA="$EXTRA -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache"
+          fi
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            EXTRA="$EXTRA -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          fi
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DMYLIB_BUILD_EXAMPLES=ON \
+            $EXTRA
+
+      - name: Build
+        shell: bash
+        run: cmake --build build --config Debug --parallel
+
+      - name: Test
+        shell: bash
+        run: ctest --test-dir build --build-config Debug --output-on-failure
+
+  sanitizers:
+    name: Sanitizers (ASan + UBSan)
+    needs: format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev
+
+      - name: Configure
+        run: >
+          cmake -B build
+          -DCMAKE_BUILD_TYPE=Debug
+          -DMYLIB_BUILD_EXAMPLES=ON
+          -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -g"
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        env:
+          ASAN_OPTIONS: detect_leaks=1:abort_on_error=1
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+        run: ctest --test-dir build --output-on-failure
+
+  tidy:
+    name: Static analysis (clang-tidy)
+    needs: format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev clang-tidy-18
+
+      - name: Configure (только генерация compile_commands.json)
+        run: >
+          cmake -B build
+          -DCMAKE_BUILD_TYPE=Debug
+          -DMYLIB_BUILD_EXAMPLES=ON
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+      - name: Run clang-tidy
+        run: |
+          run-clang-tidy-18 -p build -quiet \
+            -header-filter='.*/(include|src)/.*' \
+            $(git ls-files '*.cpp' | tr '\n' ' ')
 
   coverage:
+    name: Coverage
+    needs: format
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libcurl4-openssl-dev gcovr
-    - name: Configure
-      run: >
-        cmake -B build -DMYLIB_BUILD_EXAMPLES=ON
-        -DCMAKE_BUILD_TYPE=Debug
-        -DCMAKE_CXX_FLAGS="--coverage"
-        -DCMAKE_EXE_LINKER_FLAGS="--coverage"
-    - name: Build
-      run: cmake --build build
-    - name: Test
-      run: ctest --test-dir build --output-on-failure
-    - name: Generate coverage report
-      run: |
-        mkdir -p build/coverage
-        gcovr --root . --filter 'include/' --filter 'src/' \
-          --html --html-details -o build/coverage/index.html \
-          --print-summary
-    - name: Upload coverage report
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-report
-        path: build/coverage/
-  
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev
+          pip install --upgrade gcovr
+
+      - name: Configure
+        run: >
+          cmake -B build
+          -DCMAKE_BUILD_TYPE=Debug
+          -DMYLIB_BUILD_EXAMPLES=ON
+          -DCMAKE_CXX_FLAGS="--coverage -O0"
+          -DCMAKE_EXE_LINKER_FLAGS="--coverage"
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Generate coverage report
+        run: |
+          mkdir -p build/coverage
+          gcovr --root . \
+            --filter 'include/' --filter 'src/' \
+            --exclude '.*/tests?/.*' \
+            --html --html-details -o build/coverage/index.html \
+            --txt build/coverage/summary.txt \
+            --cobertura build/coverage/cobertura.xml \
+            --print-summary
+
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: build/coverage/
+          retention-days: 14
+
+      - name: Upload text summary (для итогового отчёта)
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-summary
+          path: build/coverage/summary.txt
+          retention-days: 1
+
+  report:
+    name: Summary
+    if: always()
+    needs: [format, build, sanitizers, tidy, coverage]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download coverage summary
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: coverage-summary
+          path: cov
+
+      - name: Build summary
+        run: |
+          icon() {
+            case "$1" in
+              success)   echo "✅ passed" ;;
+              failure)   echo "❌ failed" ;;
+              cancelled) echo "⚪ cancelled" ;;
+              skipped)   echo "⏭️ skipped" ;;
+              *)         echo "❔ $1" ;;
+            esac
+          }
+
+          {
+            echo "## CI Report"
+            echo ""
+            echo "Commit: \`${GITHUB_SHA:0:7}\` · Branch: \`${GITHUB_REF_NAME}\`"
+            echo ""
+            echo "| Check | Result |"
+            echo "|:---|:---|"
+            echo "| Code style (clang-format) | $(icon '${{ needs.format.result }}') |"
+            echo "| Build & tests (4 platforms) | $(icon '${{ needs.build.result }}') |"
+            echo "| Sanitizers (ASan + UBSan) | $(icon '${{ needs.sanitizers.result }}') |"
+            echo "| Static analysis (clang-tidy) | $(icon '${{ needs.tidy.result }}') |"
+            echo "| Coverage | $(icon '${{ needs.coverage.result }}') |"
+            echo ""
+
+            if [ -f cov/summary.txt ]; then
+              echo "### Coverage"
+              echo ""
+              echo '```'
+              tail -n 20 cov/summary.txt
+              echo '```'
+              echo ""
+            fi
+
+            echo "📦 HTML-отчёт по покрытию — во вкладке Artifacts этого запуска."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail if any check failed
+        if: contains(needs.*.result, 'failure')
+        run: exit 1
