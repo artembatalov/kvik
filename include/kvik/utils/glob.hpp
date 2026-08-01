@@ -3,7 +3,7 @@
 #include <string_view>
 
 inline bool MatchClass(std::string_view pattern, size_t start, char c,
-                size_t& out_end) {
+                       size_t& out_end) {
   bool negate = false;
   size_t i = start;
   if (i < pattern.size() && (pattern[i] == '^' || pattern[i] == '!')) {
