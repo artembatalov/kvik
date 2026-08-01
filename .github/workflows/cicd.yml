@@ -26,3 +26,33 @@ jobs:
 
     - name: Test
       run: ctest --test-dir build --output-on-failure
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libcurl4-openssl-dev gcovr
+    - name: Configure
+      run: >
+        cmake -B build -DMYLIB_BUILD_EXAMPLES=ON
+        -DCMAKE_BUILD_TYPE=Debug
+        -DCMAKE_CXX_FLAGS="--coverage"
+        -DCMAKE_EXE_LINKER_FLAGS="--coverage"
+    - name: Build
+      run: cmake --build build
+    - name: Test
+      run: ctest --test-dir build --output-on-failure
+    - name: Generate coverage report
+      run: >
+        gcovr --root . --filter 'include/' --filter 'src/'
+        --html --html-details -o build/coverage/index.html
+        --print-summary
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: build/coverage/
+  
