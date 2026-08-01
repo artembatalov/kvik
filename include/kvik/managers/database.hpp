@@ -78,7 +78,7 @@ class DatabaseManager : public DatabaseTypeManager {
          }},
 
         {"FLUSHDB",
-         [&](const Args &args) -> std::string {
+         [&](const Args &) -> std::string {
            data_.Clear();
            return "OK\n";
          }},
@@ -102,7 +102,7 @@ class DatabaseManager : public DatabaseTypeManager {
          }},
 
         {"DBSIZE",
-         [&](const Args &args) -> std::string {
+         [&](const Args &) -> std::string {
            return "(integer) " + std::to_string(data_.Size()) + "\n";
          }},
 
