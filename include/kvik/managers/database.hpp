@@ -1,11 +1,11 @@
 #pragma once
-#include <fnmatch.h>
 
 #include <string>
 #include <vector>
 
 #include "../engine/data.hpp"
 #include "../managers/type.hpp"
+#include "../utils/glob.hpp"
 
 class DatabaseManager : public DatabaseTypeManager {
  public:
@@ -62,8 +62,7 @@ class DatabaseManager : public DatabaseTypeManager {
            std::vector<std::string> matched;
            matched.reserve(all_keys.size());
            for (auto& k : all_keys) {
-             if (fnmatch(args[1].c_str(), k.c_str(), 0) == 0)
-               matched.push_back(k);
+             if (GlobMatch(args[1], k)) matched.push_back(k);
            }
            if (matched.empty()) return "(empty array)\n";
            std::string res;

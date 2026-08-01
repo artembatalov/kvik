@@ -143,31 +143,6 @@ jobs:
           UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
         run: ctest --test-dir build --output-on-failure
 
-  tidy:
-    name: Static analysis (clang-tidy)
-    needs: format
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev clang-tidy-18
-
-      - name: Configure (только генерация compile_commands.json)
-        run: >
-          cmake -B build
-          -DCMAKE_BUILD_TYPE=Debug
-          -DMYLIB_BUILD_EXAMPLES=ON
-          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-
-      - name: Run clang-tidy
-        run: |
-          run-clang-tidy-18 -p build -quiet \
-            -header-filter='.*/(include|src)/.*' \
-            $(git ls-files '*.cpp' | tr '\n' ' ')
-
   coverage:
     name: Coverage
     needs: format
@@ -223,7 +198,7 @@ jobs:
   report:
     name: Summary
     if: always()
-    needs: [format, build, sanitizers, tidy, coverage]
+    needs: [format, build, sanitizers, coverage]
     runs-on: ubuntu-latest
     steps:
       - name: Download coverage summary

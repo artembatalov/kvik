@@ -18,6 +18,7 @@ add_executable(
     database_test.cpp
     data_test.cpp
     type_test.cpp
+    utils_test.cpp
 )
 
 target_link_libraries(
