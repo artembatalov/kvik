@@ -1,8 +1,7 @@
-name: docs
+name: Docs
 
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches: [main]
 
 permissions:
@@ -16,12 +15,9 @@ concurrency:
 
 jobs:
   build:
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: main
 
       - name: Install Doxygen
         run: |
@@ -38,7 +34,6 @@ jobs:
 
   deploy:
     needs: build
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     environment:
       name: github-pages
