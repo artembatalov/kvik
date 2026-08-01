@@ -1,4 +1,3 @@
-#include "../include/kvik/engine/database.hpp"
 #include <cctype>
 #include <cstdint>
 #include <ctime>
@@ -7,30 +6,25 @@
 #include <stdexcept>
 #include <string>
 
+#include "../include/kvik/engine/database.hpp"
+
 uint64_t ParseMemoryArg(const std::string &s) {
-  if (s.empty())
-    return 0;
+  if (s.empty()) return 0;
   size_t i = s.size() - 1;
-  while (i > 0 && !std::isdigit(s[i]))
-    i--;
+  while (i > 0 && !std::isdigit(s[i])) i--;
   uint64_t val = std::stoull(s.substr(0, i + 1));
   std::string suffix = s.substr(i + 1);
-  for (auto &c : suffix)
-    c = std::tolower(c);
-  if (suffix == "kb")
-    return val * 1024;
-  if (suffix == "mb")
-    return val * 1024 * 1024;
-  if (suffix == "gb")
-    return val * 1024 * 1024 * 1024;
+  for (auto &c : suffix) c = std::tolower(c);
+  if (suffix == "kb") return val * 1024;
+  if (suffix == "mb") return val * 1024 * 1024;
+  if (suffix == "gb") return val * 1024 * 1024 * 1024;
   return val;
 }
 
 void EventHandling(Database &db) {
   std::string cmd;
   while (std::getline(std::cin, cmd)) {
-    if (cmd == "EXIT")
-      return;
+    if (cmd == "EXIT") return;
     try {
       std::cout << db.ProcessCommand(cmd);
     } catch (std::exception &e) {

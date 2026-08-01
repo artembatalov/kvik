@@ -119,7 +119,7 @@ class ListManager : public DatabaseTypeManager {
            }
            if (!data_.IsExist<List>(args[1])) return "(empty array)\n";
            auto elems = data_.View<List>(args[1]).Range(ParseInt(args[2]),
-                                                       ParseInt(args[3]));
+                                                        ParseInt(args[3]));
            if (elems.empty()) return "(empty array)\n";
            return FormatList(elems);
          }},

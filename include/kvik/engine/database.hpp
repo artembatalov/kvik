@@ -46,7 +46,6 @@ class Database {
   }
 
  private:
-
   std::vector<std::unique_ptr<DatabaseTypeManager>> managers_;
   DatabaseData data_;
   Commands commands_;
