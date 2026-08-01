@@ -10,13 +10,13 @@ class DatabaseTypeManager {
  public:
   using Args = std::vector<std::string>;
   using Commands =
-      std::unordered_map<std::string, std::function<std::string(const Args &)>>;
+      std::unordered_map<std::string, std::function<std::string(const Args&)>>;
 
-  DatabaseTypeManager(DatabaseData &data) : data_(data) {}
+  DatabaseTypeManager(DatabaseData& data) : data_(data) {}
 
-  const Commands &GetCommands() { return commands_; }
+  const Commands& GetCommands() { return commands_; }
 
  protected:
   Commands commands_;
-  DatabaseData &data_;
+  DatabaseData& data_;
 };

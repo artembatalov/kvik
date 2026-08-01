@@ -11,11 +11,11 @@ class GeoIndexManager : public DatabaseTypeManager {
  public:
   using Args = std::vector<std::string>;
 
-  GeoIndexManager(DatabaseData &data) : DatabaseTypeManager(data) {
+  GeoIndexManager(DatabaseData& data) : DatabaseTypeManager(data) {
     commands_ = {
 
         {"GEOADD",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() < 5 || (args.size() - 2) % 3 != 0) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'geoadd' command");
@@ -41,7 +41,7 @@ class GeoIndexManager : public DatabaseTypeManager {
          }},
 
         {"GEOPOS",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() < 3) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'geopos' command");
@@ -73,13 +73,13 @@ class GeoIndexManager : public DatabaseTypeManager {
          }},
 
         {"GEODIST",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() < 4) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'geodist' command");
            }
            if (!data_.IsExist<GeoIndex>(args[1])) return "(nil)\n";
-           auto &geo = data_.View<GeoIndex>(args[1]);
+           auto& geo = data_.View<GeoIndex>(args[1]);
            auto dist_m = geo.Dist(args[2], args[3]);
            if (!dist_m) return "(nil)\n";
            std::string unit = (args.size() >= 5) ? args[4] : "m";
@@ -89,11 +89,11 @@ class GeoIndexManager : public DatabaseTypeManager {
          }},
 
         {"GEOSEARCH",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            return GeoSearchImpl(args, "");
          }},
 
-        {"GEOSEARCHSTORE", [&](const Args &args) -> std::string {
+        {"GEOSEARCHSTORE", [&](const Args& args) -> std::string {
            if (args.size() < 2) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'geosearchstore' command");
@@ -112,7 +112,7 @@ class GeoIndexManager : public DatabaseTypeManager {
     return ss.str();
   }
 
-  std::string GeoSearchImpl(const Args &args, const std::string &store_dest) {
+  std::string GeoSearchImpl(const Args& args, const std::string& store_dest) {
     if (args.size() < 8) {
       throw std::runtime_error(
           "ERR wrong number of arguments for 'geosearch' command");
@@ -149,13 +149,13 @@ class GeoIndexManager : public DatabaseTypeManager {
       }
     }
 
-    auto &src = data_.View<GeoIndex>(args[1]);
+    auto& src = data_.View<GeoIndex>(args[1]);
     auto results = src.Search(lon, lat, radius_m, asc, count);
     if (results.empty()) return "(empty array)\n";
 
     if (!store_dest.empty()) {
       GeoIndex dest_geo;
-      for (auto &r : results) {
+      for (auto& r : results) {
         auto pos = src.Pos(r.member);
         if (pos) dest_geo.Add(pos->lon, pos->lat, r.member);
       }

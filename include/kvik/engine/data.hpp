@@ -19,39 +19,39 @@ class DatabaseData {
   template <typename Type>
   class MemoryGuard {
    public:
-    MemoryGuard(DatabaseData &db, Type &ref)
+    MemoryGuard(DatabaseData& db, Type& ref)
         : db_(db), ref_(ref), before_(ref.MemoryUsage()) {}
     ~MemoryGuard() {
       db_.current_memory_ = db_.current_memory_ - before_ + ref_.MemoryUsage();
     }
-    MemoryGuard(const MemoryGuard &) = delete;
-    Type *operator->() { return &ref_; }
-    const Type *operator->() const { return &ref_; }
+    MemoryGuard(const MemoryGuard&) = delete;
+    Type* operator->() { return &ref_; }
+    const Type* operator->() const { return &ref_; }
 
    private:
-    DatabaseData &db_;
-    Type &ref_;
+    DatabaseData& db_;
+    Type& ref_;
     size_t before_;
   };
 
   template <typename Type>
-  MemoryGuard<Type> Modify(const std::string &key) {
+  MemoryGuard<Type> Modify(const std::string& key) {
     return MemoryGuard<Type>(*this, Get<Type>(key));
   }
 
   template <typename Type>
-  const Type &View(const std::string &key) {
+  const Type& View(const std::string& key) {
     return Get<Type>(key);
   }
 
-  DatabaseData(const uint64_t &max_memory = 0) {
+  DatabaseData(const uint64_t& max_memory = 0) {
     max_memory_ = max_memory;
     max_memory_set_ = (max_memory_ != 0);
     ttl_enabled_ = false;
   }
 
   template <typename Type>
-  void Add(const std::string &key, const Type &value) {
+  void Add(const std::string& key, const Type& value) {
     auto it = data_.find(key);
     size_t old_mem =
         (it != data_.end()) ? EntryMemory(it->first, it->second) : 0;
@@ -70,7 +70,7 @@ class DatabaseData {
   }
 
   template <typename Type>
-  Type Extract(const std::string &key) {
+  Type Extract(const std::string& key) {
     auto it = data_.find(key);
     if (it == data_.end()) throw std::runtime_error("ERR no such key");
     if (!std::holds_alternative<Type>(it->second.element))
@@ -83,7 +83,7 @@ class DatabaseData {
     return temp;
   }
 
-  void Delete(const std::string &key) {
+  void Delete(const std::string& key) {
     auto it = data_.find(key);
     if (it == data_.end()) return;
     current_memory_ -= EntryMemory(it->first, it->second);
@@ -91,7 +91,7 @@ class DatabaseData {
   }
 
   template <typename Type>
-  bool IsExist(const std::string &key) {
+  bool IsExist(const std::string& key) {
     auto it = data_.find(key);
     if (it == data_.end()) return false;
     std::time_t now = std::time(nullptr);
@@ -106,24 +106,24 @@ class DatabaseData {
     return true;
   }
 
-  bool IsKey(const std::string &key) { return data_.contains(key); }
+  bool IsKey(const std::string& key) { return data_.contains(key); }
 
-  std::string Type(const std::string &key) {
+  std::string Type(const std::string& key) {
     auto it = data_.find(key);
     if (it == data_.end()) return "none";
     return std::visit(
-        Overloaded{[](String &) -> std::string { return "string"; },
-                   [](List &) -> std::string { return "list"; },
-                   [](Set &) -> std::string { return "set"; },
-                   [](GeoIndex &) -> std::string { return "geoindex"; },
-                   [](std::monostate &) -> std::string { return "none"; }},
+        Overloaded{[](String&) -> std::string { return "string"; },
+                   [](List&) -> std::string { return "list"; },
+                   [](Set&) -> std::string { return "set"; },
+                   [](GeoIndex&) -> std::string { return "geoindex"; },
+                   [](std::monostate&) -> std::string { return "none"; }},
         it->second.element);
   }
 
   std::vector<std::string> Keys() {
     std::vector<std::string> keys;
     keys.reserve(data_.size());
-    for (auto &[k, v] : data_) keys.push_back(k);
+    for (auto& [k, v] : data_) keys.push_back(k);
     return keys;
   }
 
@@ -134,7 +134,7 @@ class DatabaseData {
 
   size_t Size() { return data_.size(); }
 
-  void SetTTL(const std::string &key, const int &seconds) {
+  void SetTTL(const std::string& key, const int& seconds) {
     auto it = data_.find(key);
     if (it == data_.end()) throw std::runtime_error("ERR no such key");
     time_t exp = std::time(nullptr) + seconds;
@@ -143,14 +143,14 @@ class DatabaseData {
     ttl_enabled_ = true;
   }
 
-  int GetTTL(const std::string &key) const {
+  int GetTTL(const std::string& key) const {
     auto it = data_.find(key);
     if (it == data_.end()) return -2;
     if (it->second.ttl == 0) return -1;
     return std::max(0, (int)(it->second.ttl - std::time(nullptr)));
   }
 
-  bool RemoveTTL(const std::string &key) {
+  bool RemoveTTL(const std::string& key) {
     auto it = data_.find(key);
     if (it == data_.end() || it->second.ttl == 0) return false;
     it->second.ttl = 0;
@@ -174,7 +174,7 @@ class DatabaseData {
     }
   }
 
-  size_t MemoryUsage(const std::string &key) {
+  size_t MemoryUsage(const std::string& key) {
     auto it = data_.find(key);
     if (it == data_.end()) return 0;
     return EntryMemory(it->first, it->second);
@@ -182,7 +182,7 @@ class DatabaseData {
 
   size_t TotalMemory() const { return current_memory_; }
 
-  void SetMaxMemory(const uint64_t &bytes) {
+  void SetMaxMemory(const uint64_t& bytes) {
     max_memory_ = bytes;
     max_memory_set_ = (bytes != 0);
   }
@@ -201,7 +201,7 @@ class DatabaseData {
   };
 
   template <typename T>
-  static size_t EstimateValueSize(const T &val) {
+  static size_t EstimateValueSize(const T& val) {
     if constexpr (std::is_same_v<T, String>)
       return val.MemoryUsage();
     else if constexpr (std::is_same_v<T, List>)
@@ -213,15 +213,15 @@ class DatabaseData {
     return 0;
   }
 
-  static size_t EntryMemory(const std::string &key, const Value &v) {
+  static size_t EntryMemory(const std::string& key, const Value& v) {
     return key.size() + 64 +
            std::visit(
                Overloaded{
-                   [](const String &s) -> size_t { return s.MemoryUsage(); },
-                   [](const List &l) -> size_t { return l.MemoryUsage(); },
-                   [](const Set &s) -> size_t { return s.MemoryUsage(); },
-                   [](const GeoIndex &g) -> size_t { return g.MemoryUsage(); },
-                   [](const std::monostate &) -> size_t { return 0; }},
+                   [](const String& s) -> size_t { return s.MemoryUsage(); },
+                   [](const List& l) -> size_t { return l.MemoryUsage(); },
+                   [](const Set& s) -> size_t { return s.MemoryUsage(); },
+                   [](const GeoIndex& g) -> size_t { return g.MemoryUsage(); },
+                   [](const std::monostate&) -> size_t { return 0; }},
                v.element);
   }
 
@@ -238,7 +238,7 @@ class DatabaseData {
   size_t current_memory_ = 0;
 
   template <typename Type>
-  Type &Get(const std::string &key) {
+  Type& Get(const std::string& key) {
     auto it = data_.find(key);
     if (it == data_.end()) throw std::runtime_error("ERR no such key");
     time_t now = std::time(nullptr);

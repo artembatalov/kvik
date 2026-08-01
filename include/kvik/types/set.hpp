@@ -11,7 +11,6 @@ class Set {
 
   Set(std::vector<std::string>&& set) : set_(set.begin(), set.end()) {}
 
-
   void Add(const std::vector<std::string>& elems) {
     set_.insert(elems.begin(), elems.end());
   }

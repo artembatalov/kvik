@@ -1,8 +1,10 @@
+#include <gtest/gtest.h>
+
+#include <algorithm>
+#include <stdexcept>
+
 #include "include/kvik/engine/database.hpp"
 #include "include/kvik/types/list.hpp"
-#include <algorithm>
-#include <gtest/gtest.h>
-#include <stdexcept>
 
 TEST(DatabaseData, Simple) {
   DatabaseData data(0);
@@ -141,7 +143,7 @@ TEST(DatabaseData, OOMMessageContent) {
   try {
     db.Add("key", String("very long string value"));
     FAIL() << "Expected std::runtime_error";
-  } catch (const std::runtime_error &e) {
+  } catch (const std::runtime_error& e) {
     EXPECT_NE(std::string(e.what()).find("OOM"), std::string::npos);
   }
 }
@@ -182,7 +184,7 @@ TEST(DatabaseData, MemoryUsageAfterModificationWithoutExpiration) {
   size_t previous_memory = db.TotalMemory();
   {
     auto key = db.Modify<List>("key");
-    key->PushRight(std::vector<std::string> {"Bug", "could", "be", "here"});
+    key->PushRight(std::vector<std::string>{"Bug", "could", "be", "here"});
   }
   EXPECT_NE(previous_memory, db.TotalMemory());
 }

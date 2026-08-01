@@ -9,11 +9,11 @@ class SetManager : public DatabaseTypeManager {
  public:
   using Args = std::vector<std::string>;
 
-  SetManager(DatabaseData &data) : DatabaseTypeManager(data) {
+  SetManager(DatabaseData& data) : DatabaseTypeManager(data) {
     commands_ = {
 
         {"SADD",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() < 3) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'sadd' command");
@@ -28,7 +28,7 @@ class SetManager : public DatabaseTypeManager {
          }},
 
         {"SREM",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() < 3) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'srem' command");
@@ -46,7 +46,7 @@ class SetManager : public DatabaseTypeManager {
          }},
 
         {"SISMEMBER",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() != 3) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'sismember' command");
@@ -57,18 +57,18 @@ class SetManager : public DatabaseTypeManager {
          }},
 
         {"SMEMBERS",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() != 2) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'smembers' command");
            }
            if (!data_.IsExist<Set>(args[1])) return "(empty set)\n";
-           auto &members = data_.View<Set>(args[1]).GetSet();
+           auto& members = data_.View<Set>(args[1]).GetSet();
            return FormatSet(members);
          }},
 
         {"SCARD",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() != 2) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'scard' command");
@@ -79,7 +79,7 @@ class SetManager : public DatabaseTypeManager {
          }},
 
         {"SUNION",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() < 2) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'sunion' command");
@@ -89,13 +89,13 @@ class SetManager : public DatabaseTypeManager {
              if (data_.IsExist<Set>(args[i]))
                sunion.Add(data_.View<Set>(args[i]));
            }
-           auto &members = sunion.GetSet();
+           auto& members = sunion.GetSet();
            if (members.empty()) return "(empty set)\n";
            return FormatSet(members);
          }},
 
         {"SINTER",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() < 2) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'sinter' command");
@@ -106,13 +106,13 @@ class SetManager : public DatabaseTypeManager {
              if (!data_.IsExist<Set>(args[i])) return "(empty set)\n";
              result = result.Intersect(data_.View<Set>(args[i]));
            }
-           auto &members = result.GetSet();
+           auto& members = result.GetSet();
            if (members.empty()) return "(empty set)\n";
            return FormatSet(members);
          }},
 
         {"SDIFF",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() < 2) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'sdiff' command");
@@ -123,12 +123,12 @@ class SetManager : public DatabaseTypeManager {
              if (data_.IsExist<Set>(args[i]))
                result = result.Diff(data_.View<Set>(args[i]));
            }
-           auto &members = result.GetSet();
+           auto& members = result.GetSet();
            if (members.empty()) return "(empty set)\n";
            return FormatSet(members);
          }},
 
-        {"SMOVE", [&](const Args &args) -> std::string {
+        {"SMOVE", [&](const Args& args) -> std::string {
            if (args.size() != 4) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'smove' command");
@@ -155,11 +155,11 @@ class SetManager : public DatabaseTypeManager {
   }
 
  private:
-  static std::string FormatSet(const std::unordered_set<std::string> &members) {
+  static std::string FormatSet(const std::unordered_set<std::string>& members) {
     std::string res;
     res.reserve(members.size() * 16);
     int i = 1;
-    for (auto &m : members) {
+    for (auto& m : members) {
       res += std::to_string(i++);
       res += ") \"";
       res += m;

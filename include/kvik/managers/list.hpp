@@ -11,11 +11,11 @@ class ListManager : public DatabaseTypeManager {
  public:
   using Args = std::vector<std::string>;
 
-  ListManager(DatabaseData &data) : DatabaseTypeManager(data) {
+  ListManager(DatabaseData& data) : DatabaseTypeManager(data) {
     commands_ = {
 
         {"LPUSH",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() < 3) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'lpush' command");
@@ -30,7 +30,7 @@ class ListManager : public DatabaseTypeManager {
          }},
 
         {"RPUSH",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() < 3) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'rpush' command");
@@ -45,7 +45,7 @@ class ListManager : public DatabaseTypeManager {
          }},
 
         {"LPOP",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() < 2) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'lpop' command");
@@ -73,7 +73,7 @@ class ListManager : public DatabaseTypeManager {
          }},
 
         {"RPOP",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() < 2) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'rpop' command");
@@ -101,7 +101,7 @@ class ListManager : public DatabaseTypeManager {
          }},
 
         {"LLEN",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() != 2) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'llen' command");
@@ -112,7 +112,7 @@ class ListManager : public DatabaseTypeManager {
          }},
 
         {"LRANGE",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() != 4) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'lrange' command");
@@ -125,7 +125,7 @@ class ListManager : public DatabaseTypeManager {
          }},
 
         {"LINDEX",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() != 3) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'lindex' command");
@@ -134,7 +134,7 @@ class ListManager : public DatabaseTypeManager {
            try {
              return "\"" + data_.View<List>(args[1]).Index(ParseInt(args[2])) +
                     "\"\n";
-           } catch (const std::runtime_error &e) {
+           } catch (const std::runtime_error& e) {
              if (std::string(e.what()) == "ERR index out of range")
                return "(nil)\n";
              throw;
@@ -142,7 +142,7 @@ class ListManager : public DatabaseTypeManager {
          }},
 
         {"LSET",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() != 4) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'lset' command");
@@ -154,7 +154,7 @@ class ListManager : public DatabaseTypeManager {
            return "OK\n";
          }},
 
-        {"LINSERT", [&](const Args &args) -> std::string {
+        {"LINSERT", [&](const Args& args) -> std::string {
            if (args.size() != 5) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'linsert' command");
@@ -174,7 +174,7 @@ class ListManager : public DatabaseTypeManager {
   }
 
  private:
-  static int ParseInt(const std::string &s) {
+  static int ParseInt(const std::string& s) {
     try {
       return std::stoi(s);
     } catch (...) {
@@ -182,7 +182,7 @@ class ListManager : public DatabaseTypeManager {
     }
   }
 
-  static std::string FormatList(const std::vector<std::string> &elems) {
+  static std::string FormatList(const std::vector<std::string>& elems) {
     std::string res;
     res.reserve(elems.size() * 16);
     for (int i = 0; i < (int)elems.size(); i++) {

@@ -9,11 +9,11 @@ class StringManager : public DatabaseTypeManager {
  public:
   using Args = std::vector<std::string>;
 
-  StringManager(DatabaseData &data) : DatabaseTypeManager(data) {
+  StringManager(DatabaseData& data) : DatabaseTypeManager(data) {
     commands_ = {
 
         {"SET",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() != 3) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'set' command");
@@ -23,7 +23,7 @@ class StringManager : public DatabaseTypeManager {
          }},
 
         {"GET",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() != 2) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'get' command");
@@ -33,7 +33,7 @@ class StringManager : public DatabaseTypeManager {
          }},
 
         {"STRLEN",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() != 2) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'strlen' command");
@@ -43,7 +43,7 @@ class StringManager : public DatabaseTypeManager {
                   std::to_string(data_.View<String>(args[1]).Size()) + "\n";
          }},
 
-        {"APPEND", [&](const Args &args) -> std::string {
+        {"APPEND", [&](const Args& args) -> std::string {
            if (args.size() != 3) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'append' command");

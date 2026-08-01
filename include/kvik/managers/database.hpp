@@ -11,11 +11,11 @@ class DatabaseManager : public DatabaseTypeManager {
  public:
   using Args = std::vector<std::string>;
 
-  DatabaseManager(DatabaseData &data) : DatabaseTypeManager(data) {
+  DatabaseManager(DatabaseData& data) : DatabaseTypeManager(data) {
     commands_ = {
 
         {"TYPE",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() != 2) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'type' command");
@@ -24,7 +24,7 @@ class DatabaseManager : public DatabaseTypeManager {
          }},
 
         {"DEL",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() < 2) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'del' command");
@@ -40,7 +40,7 @@ class DatabaseManager : public DatabaseTypeManager {
          }},
 
         {"EXISTS",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() < 2) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'exists' command");
@@ -53,7 +53,7 @@ class DatabaseManager : public DatabaseTypeManager {
          }},
 
         {"KEYS",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() != 2) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'keys' command");
@@ -61,7 +61,7 @@ class DatabaseManager : public DatabaseTypeManager {
            auto all_keys = data_.Keys();
            std::vector<std::string> matched;
            matched.reserve(all_keys.size());
-           for (auto &k : all_keys) {
+           for (auto& k : all_keys) {
              if (fnmatch(args[1].c_str(), k.c_str(), 0) == 0)
                matched.push_back(k);
            }
@@ -78,13 +78,13 @@ class DatabaseManager : public DatabaseTypeManager {
          }},
 
         {"FLUSHDB",
-         [&](const Args &) -> std::string {
+         [&](const Args&) -> std::string {
            data_.Clear();
            return "OK\n";
          }},
 
         {"CONFIG SET",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() != 3 || args[1] != "maxmemory") {
              throw std::runtime_error("ERR syntax error");
            }
@@ -93,7 +93,7 @@ class DatabaseManager : public DatabaseTypeManager {
          }},
 
         {"CONFIG GET",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() != 2 || args[1] != "maxmemory") {
              throw std::runtime_error("ERR syntax error");
            }
@@ -102,12 +102,12 @@ class DatabaseManager : public DatabaseTypeManager {
          }},
 
         {"DBSIZE",
-         [&](const Args &) -> std::string {
+         [&](const Args&) -> std::string {
            return "(integer) " + std::to_string(data_.Size()) + "\n";
          }},
 
         {"MEMORY USAGE",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() != 2) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'memory|usage' command");
@@ -118,7 +118,7 @@ class DatabaseManager : public DatabaseTypeManager {
          }},
 
         {"EXPIRE",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() != 3) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'expire' command");
@@ -136,7 +136,7 @@ class DatabaseManager : public DatabaseTypeManager {
          }},
 
         {"TTL",
-         [&](const Args &args) -> std::string {
+         [&](const Args& args) -> std::string {
            if (args.size() != 2) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'ttl' command");
@@ -144,7 +144,7 @@ class DatabaseManager : public DatabaseTypeManager {
            return "(integer) " + std::to_string(data_.GetTTL(args[1])) + "\n";
          }},
 
-        {"PERSIST", [&](const Args &args) -> std::string {
+        {"PERSIST", [&](const Args& args) -> std::string {
            if (args.size() != 2) {
              throw std::runtime_error(
                  "ERR wrong number of arguments for 'persist' command");
@@ -154,7 +154,7 @@ class DatabaseManager : public DatabaseTypeManager {
   }
 
  private:
-  static uint64_t ParseMemory(const std::string &s) {
+  static uint64_t ParseMemory(const std::string& s) {
     if (s.empty()) return 0;
     size_t i = s.size() - 1;
     while (i > 0 && !std::isdigit(s[i])) i--;
@@ -165,7 +165,7 @@ class DatabaseManager : public DatabaseTypeManager {
       throw std::runtime_error("ERR value is not an integer or out of range");
     }
     std::string suffix = s.substr(i + 1);
-    for (auto &c : suffix) c = std::tolower(c);
+    for (auto& c : suffix) c = std::tolower(c);
     if (suffix == "kb") return val * 1024;
     if (suffix == "mb") return val * 1024 * 1024;
     if (suffix == "gb") return val * 1024 * 1024 * 1024;

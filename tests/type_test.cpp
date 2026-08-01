@@ -1,6 +1,8 @@
-#include "include/kvik/engine/database.hpp"
 #include <gtest/gtest.h>
+
 #include <stdexcept>
+
+#include "include/kvik/engine/database.hpp"
 
 TEST(TypeString, GetString) {
   String s("hello");
