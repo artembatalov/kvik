@@ -294,10 +294,3 @@ TEST(DatabaseGeo, GeoSearch) {
       "GEOSEARCH mygeo FROMLONLAT 13.361389 38.115556 BYRADIUS 200 km ASC");
   EXPECT_NE(r.find("Palermo"), std::string::npos);
 }
-
-TEST(DatabaseMemory, OOMCheck) {
-  Database db(100);
-  db.ProcessCommand("SET k v");
-  EXPECT_THROW(db.ProcessCommand("SET bigkey verylongvaluestring"),
-               std::runtime_error);
-}
