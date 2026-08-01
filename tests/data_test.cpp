@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <chrono>
 #include <stdexcept>
+#include <thread>
 
 #include "include/kvik/engine/database.hpp"
 #include "include/kvik/types/list.hpp"
@@ -194,7 +196,7 @@ TEST(DatabaseData, SimpleTTL) {
   db.Add<String>("key", String("val"));
   db.EnableTTL();
   db.SetTTL("key", 2);
-  sleep(3);
+  std::this_thread::sleep_for(std::chrono::seconds(1));
   db.CleanExpired();
   EXPECT_FALSE(db.IsKey("key"));
 }
@@ -204,7 +206,7 @@ TEST(DatabaseData, ViewExpiresLazilyWithoutCleanExpired) {
   db.Add<String>("key", String("val"));
   db.EnableTTL();
   db.SetTTL("key", 2);
-  sleep(3);
+  std::this_thread::sleep_for(std::chrono::seconds(1));
   EXPECT_THROW(db.View<String>("key"), std::runtime_error);
 }
 
@@ -213,6 +215,6 @@ TEST(DatabaseData, IsExistExpiresLazilyWithoutCleanExpired) {
   db.Add<String>("key", String("val"));
   db.EnableTTL();
   db.SetTTL("key", 2);
-  sleep(3);
+  std::this_thread::sleep_for(std::chrono::seconds(1));
   EXPECT_FALSE(db.IsExist<String>("key"));
 }
