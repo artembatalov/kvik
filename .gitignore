@@ -64,5 +64,8 @@ cmake-build-release/
 .DS_Store
 Thumbs.db
 
+# Documentation
+docs/
+
 # Other
 internal/

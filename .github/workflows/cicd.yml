@@ -230,7 +230,6 @@ jobs:
             echo "| Code style (clang-format) | $(icon '${{ needs.format.result }}') |"
             echo "| Build & tests (4 platforms) | $(icon '${{ needs.build.result }}') |"
             echo "| Sanitizers (ASan + UBSan) | $(icon '${{ needs.sanitizers.result }}') |"
-            echo "| Static analysis (clang-tidy) | $(icon '${{ needs.tidy.result }}') |"
             echo "| Coverage | $(icon '${{ needs.coverage.result }}') |"
             echo ""
 
