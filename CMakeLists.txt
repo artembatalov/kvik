@@ -13,5 +13,7 @@ include_directories(lib)
 
 add_subdirectory(src)
 
+target_compile_option(kvik PRIVATE -Wall -Wextra)
+
 enable_testing()
 add_subdirectory(tests)
