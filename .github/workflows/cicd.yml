@@ -19,7 +19,7 @@ jobs:
         sudo apt-get install -y libcurl4-openssl-dev
 
     - name: Configure
-      run: cmake -B build -DMYLIB_BUILD_EXAMPLES=ON
+      run: cmake -B build -DMYLIB_BUILD_EXAMPLES=ON -DCMAKE_BUILD_TYPE=Debug
 
     - name: Build
       run: cmake --build build
