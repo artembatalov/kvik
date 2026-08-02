@@ -1,14 +1,14 @@
 #pragma once
-#include <utility>
 #include <cstdint>
 #include <ctime>
 #include <queue>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
+#include <utility>
 #include <variant>
 #include <vector>
-#include <type_traits>
 
 #include "../types/geoindex.hpp"
 #include "../types/list.hpp"
@@ -91,22 +91,13 @@ class DatabaseData {
     data_.erase(it);
   }
 
-  bool IsExist(const std::string& key) {
-    auto it = data_.find(key);
-    if (it == data_.end()) return false;
-    std::time_t now = std::time(nullptr);
-    if (it->second.ttl > 0 && now > 0 && now >= it->second.ttl) {
-      current_memory_ -= EntryMemory(it->first, it->second);
-      data_.erase(it);
-      return false;
-    } else {
-      return true;
-    }
-  }
+  bool IsExist(const std::string& key) { return LookupLive(key) != nullptr; }
 
   template <typename Type>
   bool IsMatch(const std::string& key) {
-    return std::holds_alternative<Type>(data_.find(key)->second.element);
+    Value* value = LookupLive(key);
+    if (value == nullptr) throw std::runtime_error("ERR no such key");
+    return std::holds_alternative<Type>(value->element);
   }
 
   std::string Type(const std::string& key) {
@@ -238,19 +229,26 @@ class DatabaseData {
 
   size_t current_memory_ = 0;
 
-  template <typename Type>
-  Type& Get(const std::string& key) {
+  Value* LookupLive(const std::string& key) {
     auto it = data_.find(key);
-    if (it == data_.end()) throw std::runtime_error("ERR no such key");
+    if (it == data_.end()) return nullptr;
     time_t now = std::time(nullptr);
     if (it->second.ttl > 0 && now > 0 && now >= it->second.ttl) {
       current_memory_ -= EntryMemory(it->first, it->second);
       data_.erase(it);
-      throw std::runtime_error("ERR no such key");
+      return nullptr;
     }
-    if (!std::holds_alternative<Type>(it->second.element))
+    return &it->second;
+  }
+
+  template <typename Type>
+  Type& Get(const std::string& key) {
+    Value* v = LookupLive(key);
+    if (v == nullptr) throw std::runtime_error("ERR no such key");
+    if (!std::holds_alternative<Type>(v->element)) {
       throw std::runtime_error(
           "WRONGTYPE Operation against a key holding the wrong kind of value");
-    return std::get<Type>(it->second.element);
+    }
+    return std::get<Type>(v->element);
   }
 };

@@ -24,8 +24,7 @@ class GeoIndexManager : public DatabaseTypeManager {
              data_.Add<GeoIndex>(args[1], GeoIndex{});
            }
            if (!data_.IsMatch<GeoIndex>(args[1])) {
-             throw std::runtime_error(
-                  "ERR type error");
+             throw std::runtime_error("ERR type error");
            }
            auto geo = data_.Modify<GeoIndex>(args[1]);
            int added = 0;
