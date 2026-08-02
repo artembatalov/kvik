@@ -1,5 +1,5 @@
 #pragma once
-#include <cstddef>
+#include <utility>
 #include <cstdint>
 #include <ctime>
 #include <queue>
@@ -106,7 +106,7 @@ class DatabaseData {
 
   template <typename Type>
   bool IsMatch(const std::string& key) {
-    return !std::is_same<Type, decltype(data_.find(key)->second)>::value;
+    return std::holds_alternative<Type>(data_.find(key)->second.element);
   }
 
   std::string Type(const std::string& key) {

@@ -218,3 +218,29 @@ TEST(DatabaseData, IsExistExpiresLazilyWithoutCleanExpired) {
   std::this_thread::sleep_for(std::chrono::seconds(2));
   EXPECT_FALSE(db.IsExist("key"));
 }
+
+TEST(DatabaseData, IsMatchSimple) {
+  DatabaseData db;
+  db.Add<String>("key", String("val"));
+  if (!db.IsExist("key")) {
+    FAIL() << "String must exist!";
+  }
+  EXPECT_TRUE(db.IsMatch<String>("key"));
+  EXPECT_FALSE(db.IsMatch<Set>("key"));
+}
+
+TEST(DatabaseData, IsMatchTTL) {
+  DatabaseData db;
+  db.Add<String>("key", String("val"));
+  db.EnableTTL();
+  db.SetTTL("key", 3);
+  if (!db.IsExist("key")) {
+    FAIL() << "String must exist! TTL mechanism is broken!";
+  }
+  EXPECT_TRUE(db.IsMatch<String>("key"));
+  EXPECT_FALSE(db.IsMatch<List>("key"));
+  std::this_thread::sleep_for(std::chrono::seconds(4));
+  if (db.IsExist("key")) {
+    FAIL() << "String must not exist! TTL mechanism is broken!";
+  }
+}
