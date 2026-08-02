@@ -23,11 +23,11 @@ add_executable(
 
 target_link_libraries(
     database-tests
+    PRIVATE
+    kvik_core
     GTest::gtest_main
     GTest::gmock_main
 )
-
-target_include_directories(database-tests PUBLIC ${PROJECT_SOURCE_DIR})
 
 include(GoogleTest)
 

@@ -5,8 +5,8 @@
 #include <stdexcept>
 #include <thread>
 
-#include "include/kvik/engine/database.hpp"
-#include "include/kvik/types/list.hpp"
+#include "kvik/engine/database.hpp"
+#include "kvik/types/list.hpp"
 
 TEST(DatabaseData, Simple) {
   DatabaseData data(0);

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "../include/kvik/utils/glob.hpp"
+#include "kvik/utils/glob.hpp"
 
 TEST(GlobMatch, ExactMatchNoWildcards) {
   EXPECT_TRUE(GlobMatch("hello", "hello"));

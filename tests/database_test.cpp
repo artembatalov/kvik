@@ -1,4 +1,4 @@
-#include "include/kvik/engine/database.hpp"
+#include "kvik/engine/database.hpp"
 
 #include <gtest/gtest.h>
 

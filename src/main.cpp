@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <string>
 
-#include "../include/kvik/engine/database.hpp"
+#include "kvik/engine/database.hpp"
 
 uint64_t ParseMemoryArg(const std::string& s) {
   if (s.empty()) return 0;

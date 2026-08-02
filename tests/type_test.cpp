@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-#include "include/kvik/engine/database.hpp"
+#include "kvik/engine/database.hpp"
 
 TEST(TypeString, GetString) {
   String s("hello");
